@@ -1,0 +1,126 @@
+// Datový model rezervační aplikace.
+// Pro produkci stačí změnit `provider` na "postgresql" a upravit DATABASE_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Uživatel admin panelu (poskytovatel nebo majitel salónu)
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("provider") // "admin" | "provider"
+  providerId   String?  @unique
+  provider     Provider? @relation(fields: [providerId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+// Poskytovatel služby (zaměstnanec, který může mít rezervace)
+model Provider {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  bio         String?
+  active      Boolean  @default(true)
+  user        User?
+  workingHours WorkingHour[]
+  services    ServiceProvider[]
+  bookings    Booking[]
+  timeOff     TimeOff[]
+  createdAt   DateTime @default(now())
+}
+
+// Typ schůzky (universal — služba, prohlídka, konzultace, ...)
+model Service {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  durationMinutes Int
+  priceCzk        Int      @default(0)
+  showPrice       Boolean  @default(true)
+  // Místo konání — "in_person" | "online" | "phone" | "custom"
+  locationType    String   @default("in_person")
+  // Doplňující info: adresa, Zoom odkaz, telefon, instrukce…
+  locationDetail  String?
+  // Rezerva před/po schůzce (např. čas na přesun, přípravu)
+  bufferBeforeMin Int      @default(0)
+  bufferAfterMin  Int      @default(0)
+  // Barva v kalendáři (volitelná)
+  color           String?
+  active          Boolean  @default(true)
+  providers       ServiceProvider[]
+  bookings        Booking[]
+  createdAt       DateTime @default(now())
+}
+
+// Vazba M:N mezi službou a poskytovatelem
+model ServiceProvider {
+  serviceId  String
+  providerId String
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, providerId])
+}
+
+// Pravidelná pracovní doba (po dnech v týdnu)
+model WorkingHour {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  weekday    Int      // 0 = neděle, 1 = pondělí, ... 6 = sobota
+  startMin   Int      // minuty od půlnoci (např. 9:00 = 540)
+  endMin     Int      // minuty od půlnoci (např. 17:00 = 1020)
+
+  @@unique([providerId, weekday, startMin])
+}
+
+// Volno / dovolená / blokace
+model TimeOff {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  startsAt   DateTime
+  endsAt     DateTime
+  reason     String?
+}
+
+// Klient, který si rezervuje
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  bookings  Booking[]
+  createdAt DateTime @default(now())
+
+  @@unique([email, phone])
+}
+
+// Vlastní rezervace
+model Booking {
+  id              String   @id @default(cuid())
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id])
+  serviceId       String
+  service         Service  @relation(fields: [serviceId], references: [id])
+  providerId      String
+  provider        Provider @relation(fields: [providerId], references: [id])
+  startsAt        DateTime
+  endsAt          DateTime
+  status          String   @default("confirmed") // "confirmed" | "cancelled" | "completed"
+  note            String?
+  reminderSentAt  DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([providerId, startsAt])
+  @@index([startsAt])
+}
