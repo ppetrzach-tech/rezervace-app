@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { id: string } },
 ) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  if (!session?.user?.tenantId) {
     return NextResponse.json({ error: "Nepřihlášen" }, { status: 401 });
   }
 
@@ -16,10 +16,13 @@ export async function POST(
   if (!booking) {
     return NextResponse.json({ error: "Rezervace neexistuje" }, { status: 404 });
   }
+  if (booking.tenantId !== session.user.tenantId) {
+    return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
+  }
 
   const role = session.user.role;
   const providerId = session.user.providerId;
-  if (role !== "admin" && booking.providerId !== providerId) {
+  if (role !== "owner" && booking.providerId !== providerId) {
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
 

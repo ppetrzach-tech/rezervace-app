@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -25,14 +26,14 @@ export default function LoginPage() {
       setError("Špatný email nebo heslo.");
       return;
     }
-    router.push("/admin");
+    router.push("/dashboard");
     router.refresh();
   }
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="card w-full max-w-sm">
-        <h1 className="text-2xl font-bold mb-6">Přihlášení do administrace</h1>
+        <h1 className="text-2xl font-bold mb-6">Přihlášení</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="label">Email</label>
@@ -61,8 +62,11 @@ export default function LoginPage() {
             {loading ? "Přihlašuji…" : "Přihlásit"}
           </button>
         </form>
-        <p className="text-xs text-slate-500 mt-6">
-          Testovací účet ze seedu: <code>admin@example.com</code> / <code>heslo123</code>
+        <p className="text-sm text-slate-500 mt-6 text-center">
+          Ještě nemáte účet?{" "}
+          <Link href="/signup" className="text-brand-700 font-medium">
+            Zaregistrovat
+          </Link>
         </p>
       </div>
     </main>

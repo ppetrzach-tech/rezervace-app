@@ -1,27 +1,27 @@
+import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { format, isAfter, isBefore, startOfDay, addDays } from "date-fns";
+import { format, startOfDay, addDays } from "date-fns";
 import { cs } from "date-fns/locale";
 import { CancelButton } from "./CancelButton";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminHome() {
+export default async function DashboardHome() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    redirect("/admin/login");
-  }
+  if (!session?.user?.tenantId) redirect("/login");
 
+  const tenantId = session.user.tenantId;
   const role = session.user.role;
   const providerId = session.user.providerId;
 
   const where =
-    role === "admin"
-      ? {}
+    role === "owner"
+      ? { tenantId }
       : providerId
-        ? { providerId }
+        ? { tenantId, providerId }
         : { id: "__nothing__" };
 
   const upcoming = await prisma.booking.findMany({
@@ -38,21 +38,38 @@ export default async function AdminHome() {
   const today = await prisma.booking.findMany({
     where: {
       ...where,
-      startsAt: { gte: startOfDay(new Date()), lt: addDays(startOfDay(new Date()), 1) },
+      startsAt: {
+        gte: startOfDay(new Date()),
+        lt: addDays(startOfDay(new Date()), 1),
+      },
     },
     include: { client: true, service: true, provider: true },
     orderBy: { startsAt: "asc" },
   });
+
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
 
   return (
     <div className="space-y-8">
       <section>
         <h1 className="text-3xl font-bold mb-1">Vítejte, {session.user.name}</h1>
         <p className="text-slate-600">
-          {role === "admin"
-            ? "Vidíte rezervace všech poskytovatelů."
-            : "Vidíte rezervace přiřazené k vašemu účtu."}
+          {role === "owner"
+            ? "Vidíte rezervace celého týmu."
+            : "Vidíte své rezervace."}
         </p>
+        {tenant && (
+          <p className="text-sm text-slate-500 mt-2">
+            Veřejná rezervační URL:{" "}
+            <Link
+              href={`/${tenant.slug}`}
+              className="text-brand-700 font-medium"
+              target="_blank"
+            >
+              /{tenant.slug}
+            </Link>
+          </p>
+        )}
       </section>
 
       <section>
@@ -95,7 +112,7 @@ function BookingList({
             <th className="text-left p-3">Čas</th>
             <th className="text-left p-3">Klient</th>
             <th className="text-left p-3">Služba</th>
-            {role === "admin" && <th className="text-left p-3">Poskytovatel</th>}
+            {role === "owner" && <th className="text-left p-3">Osoba</th>}
             <th className="p-3"></th>
           </tr>
         </thead>
@@ -117,9 +134,11 @@ function BookingList({
               </td>
               <td className="p-3">
                 <div>{b.service.name}</div>
-                <div className="text-xs text-slate-500">{b.service.priceCzk} Kč</div>
+                {b.service.priceCzk > 0 && (
+                  <div className="text-xs text-slate-500">{b.service.priceCzk} Kč</div>
+                )}
               </td>
-              {role === "admin" && <td className="p-3">{b.provider.name}</td>}
+              {role === "owner" && <td className="p-3">{b.provider.name}</td>}
               <td className="p-3 text-right">
                 <CancelButton bookingId={b.id} />
               </td>

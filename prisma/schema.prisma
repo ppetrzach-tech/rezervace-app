@@ -1,4 +1,4 @@
-// Datový model rezervační aplikace.
+// Multi-tenant rezervační aplikace (Calendly model).
 // Pro produkci stačí změnit `provider` na "postgresql" a upravit DATABASE_URL.
 
 generator client {
@@ -10,55 +10,80 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Uživatel admin panelu (poskytovatel nebo majitel salónu)
-model User {
+// Firma / účet (multi-tenancy)
+model Tenant {
   id           String   @id @default(cuid())
-  email        String   @unique
+  slug         String   @unique // pro URL: /[slug]
+  name         String
+  tagline      String?
+  primaryColor String   @default("2563eb")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  users        User[]
+  providers    Provider[]
+  services     Service[]
+  bookings     Booking[]
+  clients      Client[]
+}
+
+// Uživatel admin panelu (vlastník nebo zaměstnanec firmy)
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
   passwordHash String
   name         String
-  role         String   @default("provider") // "admin" | "provider"
-  providerId   String?  @unique
+  role         String    @default("staff") // "owner" | "staff"
+  tenantId     String
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  providerId   String?   @unique
   provider     Provider? @relation(fields: [providerId], references: [id])
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
+
+  @@index([tenantId])
 }
 
-// Poskytovatel služby (zaměstnanec, který může mít rezervace)
+// Poskytovatel (osoba, která má rezervace)
 model Provider {
-  id          String   @id @default(cuid())
-  name        String
-  email       String?
-  phone       String?
-  bio         String?
-  active      Boolean  @default(true)
-  user        User?
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  email        String?
+  phone        String?
+  bio          String?
+  active       Boolean  @default(true)
+  user         User?
   workingHours WorkingHour[]
-  services    ServiceProvider[]
-  bookings    Booking[]
-  timeOff     TimeOff[]
-  createdAt   DateTime @default(now())
+  services     ServiceProvider[]
+  bookings     Booking[]
+  timeOff      TimeOff[]
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId])
 }
 
-// Typ schůzky (universal — služba, prohlídka, konzultace, ...)
+// Typ schůzky
 model Service {
   id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name            String
   description     String?
   durationMinutes Int
   priceCzk        Int      @default(0)
   showPrice       Boolean  @default(true)
-  // Místo konání — "in_person" | "online" | "phone" | "custom"
-  locationType    String   @default("in_person")
-  // Doplňující info: adresa, Zoom odkaz, telefon, instrukce…
+  locationType    String   @default("in_person") // in_person | online | phone | custom
   locationDetail  String?
-  // Rezerva před/po schůzce (např. čas na přesun, přípravu)
   bufferBeforeMin Int      @default(0)
   bufferAfterMin  Int      @default(0)
-  // Barva v kalendáři (volitelná)
   color           String?
   active          Boolean  @default(true)
   providers       ServiceProvider[]
   bookings        Booking[]
   createdAt       DateTime @default(now())
+
+  @@index([tenantId])
 }
 
 // Vazba M:N mezi službou a poskytovatelem
@@ -71,14 +96,14 @@ model ServiceProvider {
   @@id([serviceId, providerId])
 }
 
-// Pravidelná pracovní doba (po dnech v týdnu)
+// Pravidelná pracovní doba
 model WorkingHour {
   id         String   @id @default(cuid())
   providerId String
   provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  weekday    Int      // 0 = neděle, 1 = pondělí, ... 6 = sobota
-  startMin   Int      // minuty od půlnoci (např. 9:00 = 540)
-  endMin     Int      // minuty od půlnoci (např. 17:00 = 1020)
+  weekday    Int      // 0 = neděle … 6 = sobota
+  startMin   Int
+  endMin     Int
 
   @@unique([providerId, weekday, startMin])
 }
@@ -93,21 +118,26 @@ model TimeOff {
   reason     String?
 }
 
-// Klient, který si rezervuje
+// Klient (rezervující se)
 model Client {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name      String
   email     String
   phone     String
   bookings  Booking[]
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
-  @@unique([email, phone])
+  @@unique([tenantId, email, phone])
+  @@index([tenantId])
 }
 
-// Vlastní rezervace
+// Rezervace
 model Booking {
   id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   clientId        String
   client          Client   @relation(fields: [clientId], references: [id])
   serviceId       String
@@ -116,11 +146,12 @@ model Booking {
   provider        Provider @relation(fields: [providerId], references: [id])
   startsAt        DateTime
   endsAt          DateTime
-  status          String   @default("confirmed") // "confirmed" | "cancelled" | "completed"
+  status          String   @default("confirmed") // confirmed | cancelled | completed
   note            String?
   reminderSentAt  DateTime?
   createdAt       DateTime @default(now())
 
+  @@index([tenantId])
   @@index([providerId, startsAt])
   @@index([startsAt])
 }

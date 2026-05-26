@@ -45,25 +45,23 @@ function locationEmoji(type: string): string {
 }
 
 export function BookingFlow({
+  tenantSlug,
   services,
   initialServiceId,
 }: {
+  tenantSlug: string;
   services: Service[];
   initialServiceId?: string;
 }) {
   const [step, setStep] = useState<Step>(
     initialServiceId ? "provider" : "service",
   );
-  const [serviceId, setServiceId] = useState<string | null>(
-    initialServiceId ?? null,
-  );
+  const [serviceId, setServiceId] = useState<string | null>(initialServiceId ?? null);
   const [providerId, setProviderId] = useState<string | null>(null);
   const [date, setDate] = useState<Date>(startOfDay(new Date()));
   const [slots, setSlots] = useState<{ start: string; end: string }[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<{ start: string; end: string } | null>(
-    null,
-  );
+  const [selectedSlot, setSelectedSlot] = useState<{ start: string; end: string } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -91,13 +89,13 @@ export function BookingFlow({
     if (step !== "slot" || !serviceId || !providerId) return;
     setLoadingSlots(true);
     fetch(
-      `/api/availability?serviceId=${serviceId}&providerId=${providerId}&date=${format(date, "yyyy-MM-dd")}`,
+      `/api/availability?tenantSlug=${tenantSlug}&serviceId=${serviceId}&providerId=${providerId}&date=${format(date, "yyyy-MM-dd")}`,
     )
       .then((r) => r.json())
       .then((data) => setSlots(data.slots ?? []))
       .catch(() => setSlots([]))
       .finally(() => setLoadingSlots(false));
-  }, [step, serviceId, providerId, date]);
+  }, [step, serviceId, providerId, date, tenantSlug]);
 
   async function submitBooking() {
     if (!selectedSlot || !service || !provider) return;
@@ -108,6 +106,7 @@ export function BookingFlow({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          tenantSlug,
           serviceId: service.id,
           providerId: provider.id,
           startsAt: selectedSlot.start,
@@ -132,7 +131,9 @@ export function BookingFlow({
     }
   }
 
-  const dateOptions = Array.from({ length: 14 }, (_, i) => addDays(startOfDay(new Date()), i));
+  const dateOptions = Array.from({ length: 14 }, (_, i) =>
+    addDays(startOfDay(new Date()), i),
+  );
 
   return (
     <div className="space-y-6">
@@ -264,7 +265,10 @@ export function BookingFlow({
               <strong>{service.name}</strong> · {provider.name}
             </div>
             <div>
-              📅 {format(new Date(selectedSlot.start), "EEEE d. M. yyyy 'v' HH:mm", { locale: cs })}
+              📅{" "}
+              {format(new Date(selectedSlot.start), "EEEE d. M. yyyy 'v' HH:mm", {
+                locale: cs,
+              })}
             </div>
             <div>
               {locationEmoji(service.locationType)} {locationLabel(service.locationType)}
@@ -346,7 +350,9 @@ export function BookingFlow({
               <strong>{service.name}</strong> · {provider.name}
             </div>
             <div>
-              {format(new Date(selectedSlot.start), "EEEE d. M. yyyy 'v' HH:mm", { locale: cs })}
+              {format(new Date(selectedSlot.start), "EEEE d. M. yyyy 'v' HH:mm", {
+                locale: cs,
+              })}
             </div>
             <div className="text-sm">
               {locationEmoji(service.locationType)} {locationLabel(service.locationType)}
@@ -362,8 +368,10 @@ export function BookingFlow({
               ? "📱 SMS s potvrzením byla odeslána."
               : "📱 SMS notifikace nejsou aktivní."}
           </p>
-          <p className="text-xs text-slate-400 mt-4">Číslo rezervace: {bookingResult.bookingId}</p>
-          <a href="/" className="btn-primary mt-6 inline-block">
+          <p className="text-xs text-slate-400 mt-4">
+            Číslo rezervace: {bookingResult.bookingId}
+          </p>
+          <a href={`/${tenantSlug}`} className="btn-primary mt-6 inline-block">
             Zpět na úvod
           </a>
         </div>

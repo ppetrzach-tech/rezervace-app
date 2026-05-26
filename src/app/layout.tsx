@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import { branding } from "@/lib/branding";
 import { brandCssVariables } from "@/lib/colors";
 
 export const metadata: Metadata = {
-  title: `${branding.businessName} — rezervace`,
-  description: branding.tagline,
+  title: "Rezervační systém",
+  description: "Vlastní rezervační stránka pro váš byznys za 5 minut.",
 };
 
 export default function RootLayout({

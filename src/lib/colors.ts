@@ -5,8 +5,12 @@ import { branding } from "./branding";
  * Vrací CSS proměnné jako string připravený k vložení do <style>.
  */
 export function brandCssVariables(): string {
-  const hex = branding.primaryColor.replace(/^#/, "");
-  const { r, g, b } = hexToRgb(hex);
+  return brandCssVariablesForColor(branding.primaryColor);
+}
+
+export function brandCssVariablesForColor(hex: string): string {
+  const cleaned = hex.replace(/^#/, "");
+  const { r, g, b } = hexToRgb(cleaned);
 
   const palette = {
     50: mix(r, g, b, 255, 0.92),

@@ -5,11 +5,11 @@ import { prisma } from "@/lib/db";
 /**
  * Jednorázový seed endpoint pro produkci.
  *
- * Použití (z prohlížeče nebo curl):
+ * Použití:
  *   GET /api/seed?secret=<SEED_SECRET>&preset=salon|realitka|konzultant
  *
- * Vyžaduje env SEED_SECRET. Pokud je proměnná nenastavená, endpoint vrací 503.
- * Po prvním zavolání data smaže a vytvoří znovu.
+ * Vytvoří jednoho testovacího tenanta s daty podle presetu.
+ * Pokud tenant se stejným slugem existuje, smaže ho a vytvoří znovu.
  */
 export async function GET(req: NextRequest) {
   const seedSecret = process.env.SEED_SECRET;
@@ -19,26 +19,51 @@ export async function GET(req: NextRequest) {
       { status: 503 },
     );
   }
-
   const { searchParams } = new URL(req.url);
   const secret = searchParams.get("secret");
   if (secret !== seedSecret) {
     return NextResponse.json({ error: "Neautorizováno" }, { status: 401 });
   }
-
   const preset = (searchParams.get("preset") || "salon").toLowerCase();
 
-  // Smazat existující data
-  await prisma.booking.deleteMany();
-  await prisma.timeOff.deleteMany();
-  await prisma.workingHour.deleteMany();
-  await prisma.serviceProvider.deleteMany();
-  await prisma.client.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.provider.deleteMany();
-  await prisma.service.deleteMany();
+  // Mapování preset → konfigurace tenanta
+  const presetConfig: Record<
+    string,
+    { slug: string; name: string; tagline: string; primaryColor: string }
+  > = {
+    salon: {
+      slug: "salon-krasy",
+      name: "Salon Krásy",
+      tagline: "Rezervujte si termín online",
+      primaryColor: "db2777",
+    },
+    realitka: {
+      slug: "reality-novak",
+      name: "Reality Novák",
+      tagline: "Domluvte si prohlídku nebo konzultaci",
+      primaryColor: "16a34a",
+    },
+    konzultant: {
+      slug: "martin-konzultant",
+      name: "Martin Konzultant",
+      tagline: "Vyberte si termín konzultace",
+      primaryColor: "2563eb",
+    },
+  };
 
-  let providers: Array<{ id: string; name: string; email: string | null }> = [];
+  const cfg = presetConfig[preset] || presetConfig.salon;
+
+  // Smazat existujícího tenanta se stejným slugem (cascade smaže vše)
+  await prisma.tenant.deleteMany({ where: { slug: cfg.slug } });
+
+  const tenant = await prisma.tenant.create({
+    data: {
+      slug: cfg.slug,
+      name: cfg.name,
+      tagline: cfg.tagline,
+      primaryColor: cfg.primaryColor,
+    },
+  });
 
   async function createHours(providerId: string, weekdays: number[], h1: number, h2: number) {
     for (const wd of weekdays) {
@@ -48,9 +73,12 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  let providers: Array<{ id: string; name: string; email: string | null }> = [];
+
   if (preset === "realitka") {
     const jana = await prisma.provider.create({
       data: {
+        tenantId: tenant.id,
         name: "Jana Realitní",
         email: "jana@example.com",
         phone: "+420777111222",
@@ -59,6 +87,7 @@ export async function GET(req: NextRequest) {
     });
     const tomas = await prisma.provider.create({
       data: {
+        tenantId: tenant.id,
         name: "Tomáš Investiční",
         email: "tomas@example.com",
         phone: "+420777333444",
@@ -67,6 +96,7 @@ export async function GET(req: NextRequest) {
     });
     const prohlidka = await prisma.service.create({
       data: {
+        tenantId: tenant.id,
         name: "Prohlídka nemovitosti",
         description: "Osobní prohlídka konkrétní nabídky.",
         durationMinutes: 45,
@@ -80,6 +110,7 @@ export async function GET(req: NextRequest) {
     });
     const konzultace = await prisma.service.create({
       data: {
+        tenantId: tenant.id,
         name: "Úvodní konzultace (zdarma)",
         description: "30 minut online — probereme vaše požadavky.",
         durationMinutes: 30,
@@ -91,6 +122,7 @@ export async function GET(req: NextRequest) {
     });
     const ocenovani = await prisma.service.create({
       data: {
+        tenantId: tenant.id,
         name: "Ocenění nemovitosti",
         description: "Návštěva u vás, prohlídka a odhad tržní ceny.",
         durationMinutes: 60,
@@ -119,6 +151,7 @@ export async function GET(req: NextRequest) {
   } else if (preset === "konzultant") {
     const martin = await prisma.provider.create({
       data: {
+        tenantId: tenant.id,
         name: "Martin Konzultant",
         email: "martin@example.com",
         phone: "+420777111222",
@@ -127,6 +160,7 @@ export async function GET(req: NextRequest) {
     });
     const intro = await prisma.service.create({
       data: {
+        tenantId: tenant.id,
         name: "Úvodní hovor (15 min, zdarma)",
         description: "Krátké představení a posouzení, zda si vzájemně sedneme.",
         durationMinutes: 15,
@@ -139,6 +173,7 @@ export async function GET(req: NextRequest) {
     });
     const konzultace = await prisma.service.create({
       data: {
+        tenantId: tenant.id,
         name: "Hodinová konzultace",
         description: "60 minut na konkrétní problém.",
         durationMinutes: 60,
@@ -150,6 +185,7 @@ export async function GET(req: NextRequest) {
     });
     const mentoring = await prisma.service.create({
       data: {
+        tenantId: tenant.id,
         name: "Mentoring session",
         description: "90 minut hlubšího mentoringu.",
         durationMinutes: 90,
@@ -171,6 +207,7 @@ export async function GET(req: NextRequest) {
   } else {
     const anna = await prisma.provider.create({
       data: {
+        tenantId: tenant.id,
         name: "Anna Nováková",
         email: "anna@example.com",
         phone: "+420777111222",
@@ -179,6 +216,7 @@ export async function GET(req: NextRequest) {
     });
     const petr = await prisma.provider.create({
       data: {
+        tenantId: tenant.id,
         name: "Petr Svoboda",
         email: "petr@example.com",
         phone: "+420777333444",
@@ -187,6 +225,7 @@ export async function GET(req: NextRequest) {
     });
     const strih = await prisma.service.create({
       data: {
+        tenantId: tenant.id,
         name: "Dámský střih",
         description: "Mytí, střih a foukaná.",
         durationMinutes: 60,
@@ -198,6 +237,7 @@ export async function GET(req: NextRequest) {
     });
     const barveni = await prisma.service.create({
       data: {
+        tenantId: tenant.id,
         name: "Barvení vlasů",
         description: "Profesionální barvení včetně mytí a foukané.",
         durationMinutes: 120,
@@ -209,6 +249,7 @@ export async function GET(req: NextRequest) {
     });
     const pansky = await prisma.service.create({
       data: {
+        tenantId: tenant.id,
         name: "Pánský střih",
         description: "Klasický nebo moderní pánský střih.",
         durationMinutes: 45,
@@ -232,35 +273,30 @@ export async function GET(req: NextRequest) {
     providers = [anna, petr];
   }
 
+  // Admin user
   const passwordHash = await bcrypt.hash("heslo123", 10);
+  const ownerEmail = `owner-${cfg.slug}@example.com`;
+  await prisma.user.deleteMany({ where: { email: ownerEmail } });
   await prisma.user.create({
     data: {
-      email: "admin@example.com",
+      email: ownerEmail,
       passwordHash,
-      name: "Administrátor",
-      role: "admin",
+      name: `Vlastník ${cfg.name}`,
+      role: "owner",
+      tenantId: tenant.id,
     },
   });
-  for (const p of providers) {
-    if (!p.email) continue;
-    await prisma.user.create({
-      data: {
-        email: p.email.toLowerCase(),
-        passwordHash,
-        name: p.name,
-        role: "provider",
-        providerId: p.id,
-      },
-    });
-  }
 
   return NextResponse.json({
     ok: true,
     preset,
+    tenant: {
+      slug: cfg.slug,
+      url: `/${cfg.slug}`,
+    },
     providersCreated: providers.length,
     login: {
-      admin: "admin@example.com",
-      providers: providers.map((p) => p.email).filter(Boolean),
+      owner: ownerEmail,
       password: "heslo123",
     },
   });

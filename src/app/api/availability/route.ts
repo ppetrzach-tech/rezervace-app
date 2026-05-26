@@ -1,23 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAvailableSlots } from "@/lib/slots";
+import { getTenantBySlug } from "@/lib/tenant";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
+  const tenantSlug = searchParams.get("tenantSlug");
   const serviceId = searchParams.get("serviceId");
   const providerId = searchParams.get("providerId");
   const dateStr = searchParams.get("date");
 
-  if (!serviceId || !providerId || !dateStr) {
+  if (!tenantSlug || !serviceId || !providerId || !dateStr) {
     return NextResponse.json(
-      { error: "serviceId, providerId, date jsou povinné" },
+      { error: "tenantSlug, serviceId, providerId, date jsou povinné" },
       { status: 400 },
     );
   }
 
-  const service = await prisma.service.findUnique({ where: { id: serviceId } });
+  const tenant = await getTenantBySlug(tenantSlug);
+  if (!tenant) return NextResponse.json({ error: "Tenant nenalezen" }, { status: 404 });
+
+  const service = await prisma.service.findFirst({
+    where: { id: serviceId, tenantId: tenant.id },
+  });
   if (!service) {
     return NextResponse.json({ error: "Služba nenalezena" }, { status: 404 });
+  }
+
+  const provider = await prisma.provider.findFirst({
+    where: { id: providerId, tenantId: tenant.id },
+  });
+  if (!provider) {
+    return NextResponse.json({ error: "Osoba nenalezena" }, { status: 404 });
   }
 
   const date = new Date(`${dateStr}T00:00:00`);

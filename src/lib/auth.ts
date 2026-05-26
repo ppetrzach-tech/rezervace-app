@@ -5,7 +5,7 @@ import { prisma } from "./db";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
-  pages: { signIn: "/admin/login" },
+  pages: { signIn: "/login" },
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -17,6 +17,7 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials.password) return null;
         const user = await prisma.user.findUnique({
           where: { email: credentials.email.toLowerCase() },
+          include: { tenant: true },
         });
         if (!user) return null;
         const ok = await bcrypt.compare(credentials.password, user.passwordHash);
@@ -26,6 +27,8 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          tenantId: user.tenantId,
+          tenantSlug: user.tenant.slug,
           providerId: user.providerId ?? undefined,
         };
       },
@@ -34,17 +37,31 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as { role?: string }).role;
-        token.providerId = (user as { providerId?: string }).providerId;
+        const u = user as {
+          role?: string;
+          tenantId?: string;
+          tenantSlug?: string;
+          providerId?: string;
+        };
+        token.role = u.role;
+        token.tenantId = u.tenantId;
+        token.tenantSlug = u.tenantSlug;
+        token.providerId = u.providerId;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { role?: string }).role = token.role as string | undefined;
-        (session.user as { providerId?: string }).providerId = token.providerId as
-          | string
-          | undefined;
+        const u = session.user as {
+          role?: string;
+          tenantId?: string;
+          tenantSlug?: string;
+          providerId?: string;
+        };
+        u.role = token.role as string | undefined;
+        u.tenantId = token.tenantId as string | undefined;
+        u.tenantSlug = token.tenantSlug as string | undefined;
+        u.providerId = token.providerId as string | undefined;
       }
       return session;
     },

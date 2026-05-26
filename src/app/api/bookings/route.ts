@@ -5,8 +5,10 @@ import { prisma } from "@/lib/db";
 import { isSlotStillFree } from "@/lib/slots";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 import { sendBookingConfirmationSms } from "@/lib/sms";
+import { getTenantBySlug } from "@/lib/tenant";
 
 const bodySchema = z.object({
+  tenantSlug: z.string().min(1),
   serviceId: z.string().min(1),
   providerId: z.string().min(1),
   startsAt: z.string().datetime(),
@@ -34,16 +36,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { serviceId, providerId, startsAt, client } = parsed.data;
+  const { tenantSlug, serviceId, providerId, startsAt, client } = parsed.data;
 
-  const service = await prisma.service.findUnique({ where: { id: serviceId } });
-  if (!service || !service.active) {
+  const tenant = await getTenantBySlug(tenantSlug);
+  if (!tenant) return NextResponse.json({ error: "Tenant nenalezen" }, { status: 404 });
+
+  const service = await prisma.service.findFirst({
+    where: { id: serviceId, tenantId: tenant.id, active: true },
+  });
+  if (!service) {
     return NextResponse.json({ error: "Služba není dostupná" }, { status: 404 });
   }
 
-  const provider = await prisma.provider.findUnique({ where: { id: providerId } });
-  if (!provider || !provider.active) {
-    return NextResponse.json({ error: "Poskytovatel není dostupný" }, { status: 404 });
+  const provider = await prisma.provider.findFirst({
+    where: { id: providerId, tenantId: tenant.id, active: true },
+  });
+  if (!provider) {
+    return NextResponse.json({ error: "Osoba není dostupná" }, { status: 404 });
   }
 
   const link = await prisma.serviceProvider.findUnique({
@@ -51,7 +60,7 @@ export async function POST(req: NextRequest) {
   });
   if (!link) {
     return NextResponse.json(
-      { error: "Tento poskytovatel tuto službu nenabízí" },
+      { error: "Tato osoba tuto službu nenabízí" },
       { status: 400 },
     );
   }
@@ -75,9 +84,16 @@ export async function POST(req: NextRequest) {
   const clientPhone = client.phone.replace(/\s+/g, "");
 
   const clientRecord = await prisma.client.upsert({
-    where: { email_phone: { email: clientEmail, phone: clientPhone } },
+    where: {
+      tenantId_email_phone: {
+        tenantId: tenant.id,
+        email: clientEmail,
+        phone: clientPhone,
+      },
+    },
     update: { name: client.name },
     create: {
+      tenantId: tenant.id,
       name: client.name,
       email: clientEmail,
       phone: clientPhone,
@@ -86,6 +102,7 @@ export async function POST(req: NextRequest) {
 
   const booking = await prisma.booking.create({
     data: {
+      tenantId: tenant.id,
       clientId: clientRecord.id,
       serviceId,
       providerId,
@@ -108,6 +125,7 @@ export async function POST(req: NextRequest) {
     locationDetail: service.locationDetail,
     note: booking.note,
     bookingId: booking.id,
+    businessName: tenant.name,
   });
 
   const smsRes = await sendBookingConfirmationSms({

@@ -1,80 +1,87 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db";
-import { branding, locationEmoji, locationLabel } from "@/lib/branding";
 
-export const dynamic = "force-dynamic";
+export const metadata = {
+  title: "Rezervační systém",
+  description: "Vlastní rezervační stránka pro váš byznys za 5 minut.",
+};
 
-export default async function HomePage() {
-  const services = await prisma.service.findMany({
-    where: { active: true },
-    include: {
-      providers: {
-        include: { provider: true },
-      },
-    },
-    orderBy: { name: "asc" },
-  });
-
+export default function LandingPage() {
   return (
     <main className="min-h-screen">
       <header className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 py-5 flex justify-between items-center">
+        <div className="max-w-6xl mx-auto px-6 py-5 flex justify-between items-center">
           <Link href="/" className="text-xl font-semibold text-brand-700">
-            {branding.businessName}
+            📅 Rezervace
           </Link>
-          <Link href="/admin" className="text-sm text-slate-600 hover:text-brand-700">
-            Admin
-          </Link>
+          <nav className="flex items-center gap-4 text-sm">
+            <Link href="/login" className="text-slate-600 hover:text-brand-700">
+              Přihlášení
+            </Link>
+            <Link href="/signup" className="btn-primary">
+              Vyzkoušet zdarma
+            </Link>
+          </nav>
         </div>
       </header>
 
-      <section className="max-w-5xl mx-auto px-6 py-12">
-        <h1 className="text-4xl font-bold mb-3">{branding.tagline}</h1>
-        <p className="text-lg text-slate-600 mb-10">
-          Vyberte typ schůzky a najděte volný termín.
+      <section className="max-w-4xl mx-auto px-6 py-20 text-center">
+        <h1 className="text-5xl font-bold mb-6">
+          Vlastní rezervační stránka<br />za 5 minut
+        </h1>
+        <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
+          Pro kadeřníky, realitky, lékaře, konzultanty a kohokoliv, kdo potřebuje
+          přijímat rezervace online. Klienti si vyberou termín, vy dostanete
+          potvrzení.
         </p>
-
-        <h2 className="text-2xl font-semibold mb-4">Typy schůzek</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {services.map((service) => (
-            <Link
-              key={service.id}
-              href={`/rezervace?service=${service.id}`}
-              className="card hover:shadow-md hover:border-brand-500 transition"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-lg">{service.name}</h3>
-                  {service.description && (
-                    <p className="text-sm text-slate-600 mt-1">{service.description}</p>
-                  )}
-                </div>
-                <div className="text-right ml-4 shrink-0">
-                  {service.showPrice && service.priceCzk > 0 ? (
-                    <div className="font-semibold">{service.priceCzk} Kč</div>
-                  ) : null}
-                  <div className="text-xs text-slate-500">{service.durationMinutes} min</div>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                <span>
-                  {locationEmoji(service.locationType)} {locationLabel(service.locationType)}
-                </span>
-                <span>
-                  {service.providers.length}{" "}
-                  {service.providers.length === 1 ? "osoba" : "osoby"}
-                </span>
-              </div>
-            </Link>
-          ))}
+        <div className="flex justify-center gap-3">
+          <Link href="/signup" className="btn-primary text-lg px-6 py-3">
+            Vytvořit účet
+          </Link>
+          <Link
+            href="/salon-krasy"
+            className="btn-secondary text-lg px-6 py-3"
+          >
+            Vyzkoušet demo
+          </Link>
         </div>
-
-        {services.length === 0 && (
-          <div className="card text-center text-slate-500">
-            Zatím nejsou nakonfigurované žádné typy schůzek.
-          </div>
-        )}
       </section>
+
+      <section className="max-w-5xl mx-auto px-6 py-16 grid sm:grid-cols-3 gap-6">
+        <div className="card">
+          <div className="text-3xl mb-3">⚡</div>
+          <h3 className="font-semibold text-lg mb-2">Spuštění za 5 minut</h3>
+          <p className="text-slate-600 text-sm">
+            Vytvořte si účet, nastavte typy schůzek, pracovní dobu a sdílejte
+            odkaz s klienty.
+          </p>
+        </div>
+        <div className="card">
+          <div className="text-3xl mb-3">📧</div>
+          <h3 className="font-semibold text-lg mb-2">Email + SMS</h3>
+          <p className="text-slate-600 text-sm">
+            Klient i vy dostanete potvrzení. Den předem odejde automatická
+            připomínka.
+          </p>
+        </div>
+        <div className="card">
+          <div className="text-3xl mb-3">🎨</div>
+          <h3 className="font-semibold text-lg mb-2">Vaše barvy a název</h3>
+          <p className="text-slate-600 text-sm">
+            Stránka v barvách vaší firmy. Klient vidí jen váš název, ne nás.
+          </p>
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-200 mt-20">
+        <div className="max-w-6xl mx-auto px-6 py-6 text-sm text-slate-500 flex justify-between">
+          <span>© {new Date().getFullYear()} Rezervační systém</span>
+          <span>
+            <Link href="/login" className="hover:text-brand-700">
+              Přihlášení
+            </Link>
+          </span>
+        </div>
+      </footer>
     </main>
   );
 }

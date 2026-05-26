@@ -21,6 +21,7 @@ type BookingEmailData = {
   locationDetail?: string | null;
   note?: string | null;
   bookingId: string;
+  businessName?: string;
 };
 
 function formatDateCs(date: Date): string {
@@ -47,7 +48,7 @@ export async function sendBookingConfirmationEmail(
       subject: `Potvrzení rezervace — ${data.serviceName}`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
-          <div style="color: #6b7280; font-size: 13px;">${escapeHtml(branding.businessName)}</div>
+          <div style="color: #6b7280; font-size: 13px;">${escapeHtml(data.businessName || branding.businessName)}</div>
           <h2 style="color: #1d4ed8; margin-top: 4px;">Vaše rezervace je potvrzena</h2>
           <p>Dobrý den ${escapeHtml(data.clientName)},</p>
           <p>děkujeme za rezervaci. Tady jsou detaily:</p>
