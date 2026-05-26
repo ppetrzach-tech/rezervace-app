@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "next lint",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "reminders": "tsx scripts/send-reminders.ts"
   },
