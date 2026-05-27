@@ -21,7 +21,7 @@ export default async function BookingsPage({
   const filter = searchParams.filter ?? "upcoming";
 
   const baseFilter =
-    session.user.role === "owner"
+    isOwner
       ? { tenantId }
       : session.user.providerId
         ? { tenantId, providerId: session.user.providerId }
@@ -60,6 +60,8 @@ export default async function BookingsPage({
     take: 100,
   });
 
+  const isOwner = isOwner;
+
   return (
     <div className="space-y-6">
       <div>
@@ -95,7 +97,7 @@ export default async function BookingsPage({
                 <th className="text-left p-3">Klient</th>
                 <th className="text-left p-3">Schůzka</th>
                 <th className="text-left p-3">Stav</th>
-                {session.user.role === "owner" && (
+                {isOwner && (
                   <th className="text-left p-3">Osoba</th>
                 )}
                 <th className="p-3"></th>
@@ -139,7 +141,7 @@ export default async function BookingsPage({
                       </span>
                     )}
                   </td>
-                  {session.user.role === "owner" && (
+                  {isOwner && (
                     <td className="p-3">{b.provider.name}</td>
                   )}
                   <td className="p-3 text-right">
