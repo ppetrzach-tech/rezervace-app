@@ -36,14 +36,24 @@ export default async function PropertyDetailPage({
   });
 
   // formQuestions je JSON; přetypujeme
-  const formQuestions = Array.isArray(listing.formQuestions)
-    ? (listing.formQuestions as unknown as Array<{
-        id: string;
-        label: string;
-        type: string;
-        required?: boolean;
-        options?: string[];
-      }>)
+  type Q = {
+    id: string;
+    label: string;
+    type: "text" | "textarea" | "yesno" | "select" | "number";
+    required?: boolean;
+    options?: string[];
+  };
+  const formQuestions: Q[] = Array.isArray(listing.formQuestions)
+    ? (listing.formQuestions as unknown as Q[]).map((q) => ({
+        id: String(q.id),
+        label: String(q.label),
+        type:
+          q.type === "textarea" || q.type === "yesno" || q.type === "select" || q.type === "number"
+            ? q.type
+            : "text",
+        required: !!q.required,
+        options: Array.isArray(q.options) ? q.options : undefined,
+      }))
     : [];
 
   return (
