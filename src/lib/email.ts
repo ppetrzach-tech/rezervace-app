@@ -22,6 +22,7 @@ type BookingEmailData = {
   note?: string | null;
   bookingId: string;
   businessName?: string;
+  ics?: string;
 };
 
 function formatDateCs(date: Date): string {
@@ -53,7 +54,7 @@ export async function sendBookingConfirmationEmail(
           <p>Dobrý den ${escapeHtml(data.clientName)},</p>
           <p>děkujeme za rezervaci. Tady jsou detaily:</p>
           <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-            <tr><td style="padding: 8px 0; color: #6b7280;">Typ schůzky:</td><td><strong>${escapeHtml(data.serviceName)}</strong></td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280;">Schůzka:</td><td><strong>${escapeHtml(data.serviceName)}</strong></td></tr>
             <tr><td style="padding: 8px 0; color: #6b7280;">Osoba:</td><td>${escapeHtml(data.providerName)}</td></tr>
             <tr><td style="padding: 8px 0; color: #6b7280;">Termín:</td><td><strong>${dateStr}</strong></td></tr>
             <tr><td style="padding: 8px 0; color: #6b7280;">Trvání:</td><td>${data.durationMinutes} min</td></tr>
@@ -61,10 +62,19 @@ export async function sendBookingConfirmationEmail(
             ${data.showPrice !== false && data.priceCzk > 0 ? `<tr><td style="padding: 8px 0; color: #6b7280;">Cena:</td><td>${data.priceCzk} Kč</td></tr>` : ""}
             ${data.note ? `<tr><td style="padding: 8px 0; color: #6b7280;">Poznámka:</td><td>${escapeHtml(data.note)}</td></tr>` : ""}
           </table>
+          ${data.ics ? `<p style="color: #6b7280; font-size: 13px;">📅 V příloze najdete kalendářovou událost (.ics) — můžete si ji přidat do svého kalendáře.</p>` : ""}
           <p style="color: #6b7280; font-size: 13px;">Rezervační číslo: ${data.bookingId}</p>
           <p>Potřebujete změnu? Odpovězte na tento email.</p>
         </div>
       `,
+      attachments: data.ics
+        ? [
+            {
+              filename: "schuzka.ics",
+              content: Buffer.from(data.ics, "utf8").toString("base64"),
+            },
+          ]
+        : undefined,
     });
     return { ok: true };
   } catch (err) {
@@ -88,6 +98,7 @@ export async function sendReminderEmail(
       subject: `Připomínka: ${data.serviceName} zítra`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+          <div style="color: #6b7280; font-size: 13px;">${escapeHtml(data.businessName || branding.businessName)}</div>
           <h2 style="color: #1d4ed8;">Připomínáme vaši rezervaci</h2>
           <p>Dobrý den ${escapeHtml(data.clientName)},</p>
           <p>jen krátká připomínka, že zítra máte rezervovaný termín:</p>
@@ -104,7 +115,53 @@ export async function sendReminderEmail(
   }
 }
 
-function escapeHtml(s: string): string {
+/**
+ * Obecné odeslání emailu na základě šablony — používá notifikační engine.
+ * Podporuje proměnné v subject i body: {{client_name}}, {{service_name}}, {{date}}, {{time}}, {{location}}, {{confirm_url}}, {{business_name}}
+ */
+export type TemplatedEmailParams = {
+  to: string;
+  subject: string;
+  bodyHtml: string;
+  ics?: string;
+  businessName?: string;
+};
+
+export async function sendTemplatedEmail(
+  p: TemplatedEmailParams,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY chybí — email se neodeslal:", p.to);
+    return { ok: false, error: "RESEND_API_KEY chybí" };
+  }
+  try {
+    await resend.emails.send({
+      from: fromAddress,
+      to: p.to,
+      subject: p.subject,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+          ${p.businessName ? `<div style="color: #6b7280; font-size: 13px;">${escapeHtml(p.businessName)}</div>` : ""}
+          <div style="margin-top: 8px;">${p.bodyHtml}</div>
+        </div>
+      `,
+      attachments: p.ics
+        ? [
+            {
+              filename: "schuzka.ics",
+              content: Buffer.from(p.ics, "utf8").toString("base64"),
+            },
+          ]
+        : undefined,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.error("[email] Chyba odeslání:", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

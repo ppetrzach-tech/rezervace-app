@@ -43,7 +43,14 @@ async function getAccessToken(): Promise<string | null> {
   return cachedToken.token;
 }
 
-type SmsResult = { ok: boolean; error?: string };
+export type SmsResult = { ok: boolean; error?: string };
+
+/**
+ * Veřejný helper pro odeslání obecné SMS (používá notifikační engine).
+ */
+export async function sendSmsRaw(phone: string, message: string): Promise<SmsResult> {
+  return sendSms(phone, message);
+}
 
 async function sendSms(phone: string, message: string): Promise<SmsResult> {
   const channelId = process.env.GOSMS_CHANNEL_ID;

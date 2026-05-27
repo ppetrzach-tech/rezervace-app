@@ -20,11 +20,13 @@ model Tenant {
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
 
-  users        User[]
-  providers    Provider[]
-  services     Service[]
-  bookings     Booking[]
-  clients      Client[]
+  users             User[]
+  providers         Provider[]
+  services          Service[]
+  bookings          Booking[]
+  clients           Client[]
+  eventListings     EventListing[]
+  notificationRules NotificationRule[]
 }
 
 // Uživatel admin panelu (vlastník nebo zaměstnanec firmy)
@@ -58,6 +60,7 @@ model Provider {
   services     ServiceProvider[]
   bookings     Booking[]
   timeOff      TimeOff[]
+  eventListings EventListing[]
   createdAt    DateTime @default(now())
 
   @@index([tenantId])
@@ -81,6 +84,7 @@ model Service {
   active          Boolean  @default(true)
   providers       ServiceProvider[]
   bookings        Booking[]
+  eventListings   EventListing[]
   createdAt       DateTime @default(now())
 
   @@index([tenantId])
@@ -151,7 +155,104 @@ model Booking {
   reminderSentAt  DateTime?
   createdAt       DateTime @default(now())
 
+  // Nemovitosti / event listing (volitelné — pro makléřský flow)
+  listingId       String?
+  listing         EventListing? @relation(fields: [listingId], references: [id])
+  eventSlotId     String?       @unique
+  eventSlot       EventSlot?    @relation(fields: [eventSlotId], references: [id])
+
+  // Odpovědi na vlastní otázky (JSON: [{ questionId, label, value }])
+  customAnswers   Json?
+
+  // Potvrzení klientem (tlačítko v emailu 24h před)
+  confirmationToken    String?   @unique
+  confirmedByClientAt  DateTime?
+
+  // Notifikační log (jedna rezervace má víc notifikací)
+  notifications NotificationLog[]
+
   @@index([tenantId])
   @@index([providerId, startsAt])
   @@index([startsAt])
+}
+
+// Nemovitost / event (pro makléřský / prohlídkový flow)
+model EventListing {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slug            String   // /[tenantSlug]/p/[slug]
+  title           String
+  description     String?
+  address         String?
+  durationMinutes Int      @default(30)
+  serviceId       String?
+  service         Service? @relation(fields: [serviceId], references: [id])
+  providerId      String?
+  provider        Provider? @relation(fields: [providerId], references: [id])
+  // Vlastní otázky — JSON: [{ id, label, type: 'text'|'textarea'|'yesno'|'select'|'number', required, options? }]
+  formQuestions   Json     @default("[]")
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  slots           EventSlot[]
+  bookings        Booking[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+// Ručně přidaný slot v rámci nemovitosti
+model EventSlot {
+  id        String   @id @default(cuid())
+  listingId String
+  listing   EventListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  startsAt  DateTime
+  endsAt    DateTime
+  booking   Booking?
+
+  @@index([listingId, startsAt])
+}
+
+// Konfigurovatelné notifikační pravidlo (jedna sada pro celý tenant)
+model NotificationRule {
+  id                   String   @id @default(cuid())
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // Krátký název pravidla (pro orientaci v adminu)
+  name                 String
+  // Typ kanálu: "email" | "sms"
+  channel              String
+  // Posun proti začátku schůzky v MINUTÁCH. Záporné = před, kladné = po.
+  offsetMinutes        Int
+  // Předmět emailu (jen pro email)
+  subject              String?
+  // Tělo / text. Pro email lze HTML, pro SMS plain. Podporuje proměnné: {{client_name}}, {{service_name}}, {{date}}, {{time}}, {{location}}, {{confirm_url}}, {{business_name}}
+  body                 String
+  // Přiložit do emailu .ics
+  includeIcs           Boolean  @default(false)
+  // Přiložit tlačítko / odkaz "Potvrdit"
+  includeConfirmButton Boolean  @default(false)
+  // Posílat jen pokud klient ještě nepotvrdil (typicky SMS fallback)
+  onlyIfNotConfirmed   Boolean  @default(false)
+  enabled              Boolean  @default(true)
+  order                Int      @default(0)
+  createdAt            DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+// Log odeslaných notifikací (zabraňuje opakovanému odeslání)
+model NotificationLog {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  ruleId    String?
+  channel   String   // email | sms
+  status    String   // sent | failed | skipped
+  error     String?
+  sentAt    DateTime @default(now())
+
+  @@index([bookingId])
+  @@unique([bookingId, ruleId])
 }

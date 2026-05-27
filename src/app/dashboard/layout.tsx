@@ -34,6 +34,9 @@ export default async function DashboardLayout({
               <Link href="/dashboard" className="hover:text-brand-700">
                 Rezervace
               </Link>
+              <Link href="/dashboard/properties" className="hover:text-brand-700">
+                Nemovitosti
+              </Link>
               <Link href="/dashboard/services" className="hover:text-brand-700">
                 Typy schůzek
               </Link>
@@ -42,6 +45,9 @@ export default async function DashboardLayout({
               </Link>
               <Link href="/dashboard/hours" className="hover:text-brand-700">
                 Pracovní doba
+              </Link>
+              <Link href="/dashboard/notifications" className="hover:text-brand-700">
+                Notifikace
               </Link>
               <Link href="/dashboard/settings" className="hover:text-brand-700">
                 Nastavení
