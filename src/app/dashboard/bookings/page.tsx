@@ -19,6 +19,7 @@ export default async function BookingsPage({
 
   const tenantId = session.user.tenantId;
   const filter = searchParams.filter ?? "upcoming";
+  const isOwner = session.user.role === "owner";
 
   const baseFilter =
     isOwner
@@ -60,7 +61,6 @@ export default async function BookingsPage({
     take: 100,
   });
 
-  const isOwner = isOwner;
 
   return (
     <div className="space-y-6">
