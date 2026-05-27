@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { format, addMinutes } from "date-fns";
 import { cs } from "date-fns/locale";
 import { CopyButton } from "../../CopyButton";
@@ -54,6 +54,12 @@ export function PropertyEditor({
   const [newSlotDate, setNewSlotDate] = useState("");
   const [newSlotTime, setNewSlotTime] = useState("");
 
+  // Sync slots z props když se po router.refresh() vrátí nová data ze serveru.
+  // Slots se měnia jen přes server (POST/DELETE), takže neukládáme lokální editace.
+  useEffect(() => {
+    setData((prev) => ({ ...prev, slots: initial.slots }));
+  }, [initial.slots]);
+
   const publicPath = `/${tenantSlug}/p/${data.slug}`;
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}${publicPath}`;
 
@@ -92,14 +98,16 @@ export function PropertyEditor({
     }
   }
 
-  async function addSlot() {
-    if (!newSlotDate || !newSlotTime) {
-      alert("Vyplňte datum i čas.");
+  async function addSlot(dateOverride?: string, timeOverride?: string) {
+    const d = dateOverride ?? newSlotDate;
+    const t = timeOverride ?? newSlotTime;
+    if (!d || !t) {
+      setMsg({ ok: false, text: "Vyplňte datum i čas." });
       return;
     }
-    const startsAt = new Date(`${newSlotDate}T${newSlotTime}:00`);
+    const startsAt = new Date(`${d}T${t}:00`);
     if (isNaN(startsAt.getTime())) {
-      alert("Neplatné datum/čas.");
+      setMsg({ ok: false, text: "Neplatné datum/čas." });
       return;
     }
     const endsAt = addMinutes(startsAt, data.durationMinutes);
@@ -113,11 +121,25 @@ export function PropertyEditor({
     });
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
-      alert(j.error ?? "Nepodařilo se přidat slot");
+      setMsg({ ok: false, text: j.error ?? "Nepodařilo se přidat slot" });
       return;
     }
-    setNewSlotDate("");
+    const json = (await res.json()) as { id: string };
+    // Optimistic update — slot rovnou vidět v UI
+    setData((prev) => ({
+      ...prev,
+      slots: [
+        ...prev.slots,
+        {
+          id: json.id,
+          startsAt: startsAt.toISOString(),
+          endsAt: endsAt.toISOString(),
+        },
+      ].sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+    }));
     setNewSlotTime("");
+    setMsg({ ok: true, text: `Slot přidán: ${format(startsAt, "d. M. HH:mm", { locale: cs })}` });
+    setTimeout(() => setMsg(null), 2000);
     router.refresh();
   }
 
@@ -132,6 +154,11 @@ export function PropertyEditor({
       alert(j.error ?? "Smazání selhalo");
       return;
     }
+    // Optimistic — odebrat lokálně hned
+    setData((prev) => ({
+      ...prev,
+      slots: prev.slots.filter((s) => s.id !== slotId),
+    }));
     router.refresh();
   }
 
@@ -342,34 +369,56 @@ export function PropertyEditor({
         <section className="space-y-4">
           <div className="card">
             <h3 className="font-semibold mb-3">+ Přidat termín prohlídky</h3>
-            <div className="flex gap-2 items-end flex-wrap">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
               <div>
-                <label className="label text-xs">Datum</label>
+                <label className="label">Datum</label>
                 <input
                   type="date"
                   className="input"
+                  min={new Date().toISOString().slice(0, 10)}
                   value={newSlotDate}
                   onChange={(e) => setNewSlotDate(e.target.value)}
                 />
               </div>
               <div>
-                <label className="label text-xs">Čas</label>
+                <label className="label">Čas</label>
                 <input
                   type="time"
+                  step={300}
                   className="input"
                   value={newSlotTime}
                   onChange={(e) => setNewSlotTime(e.target.value)}
                 />
               </div>
-              <div className="flex-1 min-w-[200px]">
-                <label className="label text-xs">Trvání</label>
-                <div className="text-sm text-slate-600 py-2">
-                  {data.durationMinutes} min (nastaveno v Detailech)
-                </div>
-              </div>
-              <button onClick={addSlot} className="btn-primary">
-                Přidat
+              <button
+                onClick={() => addSlot()}
+                disabled={!newSlotDate || !newSlotTime}
+                className="btn-primary h-[42px]"
+              >
+                + Přidat
               </button>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">
+              Trvání slotu: <strong>{data.durationMinutes} min</strong> (nastaveno
+              v záložce Detaily). Pro typické časy můžete použít rychlá tlačítka:
+            </p>
+            <div className="flex gap-1 flex-wrap mt-2">
+              {["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"].map(
+                (t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setNewSlotTime(t)}
+                    className={`text-xs px-2 py-1 rounded border ${
+                      newSlotTime === t
+                        ? "bg-brand-600 text-white border-brand-600"
+                        : "bg-white border-slate-200 hover:border-brand-500"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ),
+              )}
             </div>
           </div>
 
