@@ -17,8 +17,11 @@ export default async function SettingsPage() {
   if (!tenant) redirect("/login");
 
   return (
-    <div className="space-y-6 max-w-xl">
-      <h1 className="text-3xl font-bold">Nastavení firmy</h1>
+    <div className="max-w-xl">
+      <h2 className="text-2xl font-semibold mb-1">Firma a branding</h2>
+      <p className="text-sm text-slate-600 mb-6">
+        Název, URL adresa a vzhled stránky, kterou vidí klienti.
+      </p>
       <SettingsForm
         initial={{
           slug: tenant.slug,

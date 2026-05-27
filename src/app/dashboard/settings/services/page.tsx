@@ -24,12 +24,14 @@ export default async function ServicesAdmin() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Typy schůzek</h1>
-      <p className="text-slate-600 text-sm">
-        Definujte, na co se k vám klienti můžou objednat. Každý typ má svoje trvání,
-        cenu, místo a osoby, které ho nabízejí.
-      </p>
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-2xl font-semibold">Typy schůzek</h2>
+        <p className="text-slate-600 text-sm">
+          Pokročilé — obecné typy schůzek (např. konzultace, ocenění, schůzka v kanceláři).
+          Pro prohlídky konkrétních nemovitostí používejte sekci Nemovitosti.
+        </p>
+      </div>
       <ServicesManager
         initialServices={services.map((s) => ({
           id: s.id,

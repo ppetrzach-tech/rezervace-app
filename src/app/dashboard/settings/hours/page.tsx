@@ -28,12 +28,14 @@ export default async function HoursPage() {
   }));
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Pracovní doba</h1>
-      <p className="text-slate-600 text-sm">
-        Kdy mají jednotliví členové týmu být k dispozici. Klient uvidí jen volné
-        sloty v rámci pracovní doby.
-      </p>
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-2xl font-semibold">Pracovní doba</h2>
+        <p className="text-slate-600 text-sm">
+          Pro klasické typy schůzek (rezervace generované z pracovní doby).
+          Nepoužívá se pro Nemovitosti — tam přidáváte termíny ručně.
+        </p>
+      </div>
       <HoursManager initialProviders={data} />
     </div>
   );

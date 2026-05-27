@@ -17,12 +17,12 @@ export default async function NotificationsPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-3xl font-bold">Notifikace</h1>
+        <h2 className="text-2xl font-semibold">Notifikace</h2>
         <p className="text-slate-600 text-sm mt-1">
           Nastavte si, jaké emaily a SMS se mají automaticky odesílat klientům před
-          schůzkou a po ní. Pravidlo platí pro celou firmu (všechny rezervace).
+          schůzkou a po ní. Pravidlo platí pro celou firmu.
         </p>
       </div>
       <NotificationsManager

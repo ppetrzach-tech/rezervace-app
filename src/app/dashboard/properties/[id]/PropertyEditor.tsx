@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { format, addMinutes } from "date-fns";
 import { cs } from "date-fns/locale";
+import { CopyButton } from "../../CopyButton";
 
 type FormQuestion = {
   id: string;
@@ -34,6 +35,8 @@ type PropertyData = {
   slots: Slot[];
 };
 
+type Tab = "details" | "slots" | "questions";
+
 export function PropertyEditor({
   tenantSlug,
   initial,
@@ -44,17 +47,23 @@ export function PropertyEditor({
   providers: { id: string; name: string }[];
 }) {
   const router = useRouter();
+  const [tab, setTab] = useState<Tab>("details");
   const [data, setData] = useState<PropertyData>(initial);
-  const [savingDetails, setSavingDetails] = useState(false);
-  const [detailsMsg, setDetailsMsg] = useState<{ ok: boolean; text: string } | null>(
-    null,
-  );
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [newSlotDate, setNewSlotDate] = useState("");
   const [newSlotTime, setNewSlotTime] = useState("");
 
+  const publicPath = `/${tenantSlug}/p/${data.slug}`;
+  const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}${publicPath}`;
+
+  const availableSlots = data.slots.filter(
+    (s) => new Date(s.startsAt).getTime() > Date.now() && !s.bookedBy,
+  );
+
   async function saveDetails() {
-    setSavingDetails(true);
-    setDetailsMsg(null);
+    setSaving(true);
+    setMsg(null);
     try {
       const res = await fetch(`/api/dashboard/properties/${data.id}`, {
         method: "PATCH",
@@ -72,13 +81,14 @@ export function PropertyEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        setDetailsMsg({ ok: false, text: json.error ?? "Uložení selhalo" });
+        setMsg({ ok: false, text: json.error ?? "Uložení selhalo" });
       } else {
-        setDetailsMsg({ ok: true, text: "Uloženo." });
+        setMsg({ ok: true, text: "Uloženo." });
         router.refresh();
       }
     } finally {
-      setSavingDetails(false);
+      setSaving(false);
+      setTimeout(() => setMsg(null), 3000);
     }
   }
 
@@ -93,7 +103,6 @@ export function PropertyEditor({
       return;
     }
     const endsAt = addMinutes(startsAt, data.durationMinutes);
-
     const res = await fetch(`/api/dashboard/properties/${data.id}/slots`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -114,9 +123,10 @@ export function PropertyEditor({
 
   async function deleteSlot(slotId: string) {
     if (!confirm("Smazat tento slot?")) return;
-    const res = await fetch(`/api/dashboard/properties/${data.id}/slots/${slotId}`, {
-      method: "DELETE",
-    });
+    const res = await fetch(
+      `/api/dashboard/properties/${data.id}/slots/${slotId}`,
+      { method: "DELETE" },
+    );
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
       alert(j.error ?? "Smazání selhalo");
@@ -130,7 +140,12 @@ export function PropertyEditor({
       ...data,
       formQuestions: [
         ...data.formQuestions,
-        { id: crypto.randomUUID(), label: "Nová otázka", type: "text", required: false },
+        {
+          id: crypto.randomUUID(),
+          label: "Nová otázka",
+          type: "text",
+          required: false,
+        },
       ],
     });
   }
@@ -157,85 +172,144 @@ export function PropertyEditor({
     setData({ ...data, formQuestions: arr });
   }
 
-  const publicUrl = `/${tenantSlug}/p/${data.slug}`;
-
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold">{data.title}</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Veřejný odkaz:{" "}
-            <Link href={publicUrl} target="_blank" className="text-brand-700 font-mono">
-              {publicUrl}
+    <div className="space-y-6">
+      {/* Hlavička */}
+      <div className="flex justify-between items-start gap-4">
+        <div className="flex-1 min-w-0">
+          <Link
+            href="/dashboard/properties"
+            className="text-sm text-slate-500 hover:text-brand-700"
+          >
+            ← Zpět na nemovitosti
+          </Link>
+          <h1 className="text-3xl font-bold mt-1">{data.title || "Bez názvu"}</h1>
+          <div className="text-sm text-slate-500 mt-1 flex flex-wrap gap-3">
+            <span>{availableSlots.length} volných slotů</span>
+            <span>•</span>
+            <Link href={publicPath} target="_blank" className="text-brand-700">
+              Otevřít veřejnou stránku ↗
             </Link>
-          </p>
+          </div>
         </div>
-        <Link href="/dashboard/properties" className="text-sm text-slate-600">
-          ← Zpět
-        </Link>
+        <div className="flex flex-col gap-2 items-end">
+          <CopyButton text={publicUrl} label="📋 Kopírovat odkaz" />
+          <label className="text-xs flex items-center gap-2 text-slate-600">
+            <input
+              type="checkbox"
+              checked={data.active}
+              onChange={(e) => {
+                setData({ ...data, active: e.target.checked });
+              }}
+            />
+            Aktivní pro klienty
+          </label>
+        </div>
       </div>
 
-      {/* DETAILY */}
-      <section className="card space-y-4">
-        <h2 className="text-xl font-semibold">Detaily</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
+      {/* Tabs */}
+      <nav className="border-b border-slate-200 flex gap-1">
+        <TabButton
+          active={tab === "details"}
+          onClick={() => setTab("details")}
+          icon="📝"
+          label="Detaily"
+        />
+        <TabButton
+          active={tab === "slots"}
+          onClick={() => setTab("slots")}
+          icon="📅"
+          label={`Termíny (${data.slots.length})`}
+        />
+        <TabButton
+          active={tab === "questions"}
+          onClick={() => setTab("questions")}
+          icon="❓"
+          label={`Otázky (${data.formQuestions.length})`}
+        />
+      </nav>
+
+      {msg && (
+        <div
+          className={`px-4 py-2 rounded-lg text-sm ${
+            msg.ok
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}
+        >
+          {msg.text}
+        </div>
+      )}
+
+      {tab === "details" && (
+        <section className="card space-y-4">
+          <div>
             <label className="label">Název *</label>
             <input
               className="input"
               value={data.title}
               onChange={(e) => setData({ ...data, title: e.target.value })}
+              placeholder="např. Byt 3+kk Praha 7, Letná"
             />
           </div>
           <div>
-            <label className="label">URL slug *</label>
-            <input
-              className="input"
-              value={data.slug}
-              onChange={(e) =>
-                setData({
-                  ...data,
-                  slug: e.target.value
-                    .toLowerCase()
-                    .replace(/[^a-z0-9-]/g, "-")
-                    .replace(/^-+|-+$/g, ""),
-                })
-              }
-            />
-          </div>
-          <div>
-            <label className="label">Trvání (min) *</label>
-            <input
-              type="number"
-              min={5}
-              step={5}
-              className="input"
-              value={data.durationMinutes}
-              onChange={(e) =>
-                setData({ ...data, durationMinutes: parseInt(e.target.value) || 30 })
-              }
-            />
-          </div>
-          <div className="col-span-2">
             <label className="label">Adresa</label>
             <input
               className="input"
               value={data.address}
               onChange={(e) => setData({ ...data, address: e.target.value })}
+              placeholder="např. Strojnická 12, Praha 7"
             />
           </div>
-          <div className="col-span-2">
+          <div>
             <label className="label">Popis</label>
             <textarea
-              rows={3}
+              rows={4}
               className="input"
               value={data.description}
               onChange={(e) => setData({ ...data, description: e.target.value })}
+              placeholder="Krátký popis nemovitosti, který uvidí klient…"
             />
           </div>
-          <div className="col-span-2">
-            <label className="label">Přiřazený realitní makléř / osoba</label>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">URL slug *</label>
+              <input
+                className="input"
+                value={data.slug}
+                onChange={(e) =>
+                  setData({
+                    ...data,
+                    slug: e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9-]/g, "-")
+                      .replace(/^-+|-+$/g, ""),
+                  })
+                }
+              />
+              <p className="text-xs text-slate-500 mt-1 font-mono break-all">
+                /p/{data.slug || "vase-url"}
+              </p>
+            </div>
+            <div>
+              <label className="label">Trvání prohlídky (min) *</label>
+              <input
+                type="number"
+                min={5}
+                step={5}
+                className="input"
+                value={data.durationMinutes}
+                onChange={(e) =>
+                  setData({
+                    ...data,
+                    durationMinutes: parseInt(e.target.value) || 30,
+                  })
+                }
+              />
+            </div>
+          </div>
+          <div>
+            <label className="label">Přiřazený makléř / osoba</label>
             <select
               className="input"
               value={data.providerId ?? ""}
@@ -243,7 +317,7 @@ export function PropertyEditor({
                 setData({ ...data, providerId: e.target.value || null })
               }
             >
-              <option value="">(žádný)</option>
+              <option value="">— První dostupný v týmu —</option>
               {providers.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -251,205 +325,241 @@ export function PropertyEditor({
               ))}
             </select>
           </div>
-          <div className="col-span-2">
-            <label className="text-sm flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={data.active}
-                onChange={(e) => setData({ ...data, active: e.target.checked })}
-              />
-              Aktivní (klienti uvidí stránku)
-            </label>
+
+          <div className="pt-2">
+            <button
+              onClick={saveDetails}
+              disabled={saving}
+              className="btn-primary"
+            >
+              {saving ? "Ukládám…" : "Uložit detaily"}
+            </button>
           </div>
-        </div>
+        </section>
+      )}
 
-        {detailsMsg && (
-          <p className={`text-sm ${detailsMsg.ok ? "text-green-600" : "text-red-600"}`}>
-            {detailsMsg.text}
-          </p>
-        )}
-
-        <button onClick={saveDetails} disabled={savingDetails} className="btn-primary">
-          {savingDetails ? "Ukládám…" : "Uložit detaily"}
-        </button>
-      </section>
-
-      {/* TERMÍNY */}
-      <section className="card space-y-4">
-        <h2 className="text-xl font-semibold">Termíny prohlídek</h2>
-        <p className="text-sm text-slate-600">
-          Ručně přidejte konkrétní časy, kdy je byt na prohlídku. Klient si vybere
-          jeden z nich. Trvání slotu = {data.durationMinutes} min.
-        </p>
-
-        <div className="flex gap-2 items-end flex-wrap">
-          <div>
-            <label className="label">Datum</label>
-            <input
-              type="date"
-              className="input"
-              value={newSlotDate}
-              onChange={(e) => setNewSlotDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="label">Čas (HH:MM)</label>
-            <input
-              type="time"
-              className="input"
-              value={newSlotTime}
-              onChange={(e) => setNewSlotTime(e.target.value)}
-            />
-          </div>
-          <button onClick={addSlot} className="btn-primary">
-            + Přidat termín
-          </button>
-        </div>
-
-        <div className="space-y-2">
-          {data.slots.length === 0 && (
-            <p className="text-slate-500 text-sm">Zatím žádné termíny.</p>
-          )}
-          {data.slots.map((s) => {
-            const date = new Date(s.startsAt);
-            const isPast = date.getTime() < Date.now();
-            return (
-              <div
-                key={s.id}
-                className={`flex justify-between items-center p-3 rounded-lg border ${
-                  isPast ? "border-slate-100 text-slate-400" : "border-slate-200"
-                }`}
-              >
-                <div>
-                  <div className="font-medium">
-                    {format(date, "EEEE d. M. yyyy 'v' HH:mm", { locale: cs })}
-                  </div>
-                  {s.bookedBy ? (
-                    <div className="text-xs text-brand-700">
-                      ✅ Rezervováno: {s.bookedBy}
-                    </div>
-                  ) : (
-                    <div className="text-xs text-slate-500">Volný slot</div>
-                  )}
-                </div>
-                {s.id && !s.bookedBy && (
-                  <button
-                    onClick={() => deleteSlot(s.id!)}
-                    className="text-sm text-red-600 hover:underline"
-                  >
-                    Smazat
-                  </button>
-                )}
+      {tab === "slots" && (
+        <section className="space-y-4">
+          <div className="card">
+            <h3 className="font-semibold mb-3">+ Přidat termín prohlídky</h3>
+            <div className="flex gap-2 items-end flex-wrap">
+              <div>
+                <label className="label text-xs">Datum</label>
+                <input
+                  type="date"
+                  className="input"
+                  value={newSlotDate}
+                  onChange={(e) => setNewSlotDate(e.target.value)}
+                />
               </div>
-            );
-          })}
-        </div>
-      </section>
+              <div>
+                <label className="label text-xs">Čas</label>
+                <input
+                  type="time"
+                  className="input"
+                  value={newSlotTime}
+                  onChange={(e) => setNewSlotTime(e.target.value)}
+                />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="label text-xs">Trvání</label>
+                <div className="text-sm text-slate-600 py-2">
+                  {data.durationMinutes} min (nastaveno v Detailech)
+                </div>
+              </div>
+              <button onClick={addSlot} className="btn-primary">
+                Přidat
+              </button>
+            </div>
+          </div>
 
-      {/* OTÁZKY */}
-      <section className="card space-y-4">
-        <div className="flex justify-between items-center">
+          {data.slots.length === 0 ? (
+            <div className="card text-center text-slate-500 py-8">
+              <div className="text-3xl mb-2">📅</div>
+              Žádné termíny. Přidejte první nahoře.
+            </div>
+          ) : (
+            <div className="card p-0 overflow-hidden">
+              <ul className="divide-y divide-slate-100">
+                {data.slots.map((s) => {
+                  const date = new Date(s.startsAt);
+                  const isPast = date.getTime() < Date.now();
+                  return (
+                    <li
+                      key={s.id}
+                      className={`px-4 py-3 flex justify-between items-center ${
+                        isPast ? "opacity-50" : ""
+                      }`}
+                    >
+                      <div>
+                        <div className="font-medium">
+                          {format(date, "EEEE d. M. yyyy 'v' HH:mm", { locale: cs })}
+                        </div>
+                        {s.bookedBy ? (
+                          <div className="text-xs text-brand-700">
+                            ✅ {s.bookedBy}
+                          </div>
+                        ) : isPast ? (
+                          <div className="text-xs text-slate-400">proběhlo</div>
+                        ) : (
+                          <div className="text-xs text-slate-500">volný</div>
+                        )}
+                      </div>
+                      {s.id && !s.bookedBy && !isPast && (
+                        <button
+                          onClick={() => deleteSlot(s.id!)}
+                          className="text-sm text-red-600 hover:underline"
+                        >
+                          Smazat
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
+
+      {tab === "questions" && (
+        <section className="card space-y-4">
           <div>
-            <h2 className="text-xl font-semibold">Otázky ve formuláři</h2>
             <p className="text-sm text-slate-600">
-              Co se má klienta zeptat při rezervaci. Standardní otázky (jméno,
-              email, telefon) jsou vždy v formuláři — sem přidávejte navíc to, co
-              potřebujete.
+              Vlastní otázky pro klienta. Standardní otázky (jméno, email, telefon)
+              jsou v formuláři vždy.
             </p>
           </div>
-          <button onClick={addQuestion} className="btn-secondary">
-            + Otázka
-          </button>
-        </div>
 
-        <div className="space-y-3">
-          {data.formQuestions.map((q, i) => (
-            <div key={q.id} className="border border-slate-200 rounded-lg p-3 space-y-2">
-              <div className="flex gap-2 items-start">
-                <div className="flex flex-col">
-                  <button
-                    onClick={() => moveQuestion(q.id, -1)}
-                    disabled={i === 0}
-                    className="text-slate-400 disabled:opacity-30"
-                    title="Nahoru"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    onClick={() => moveQuestion(q.id, 1)}
-                    disabled={i === data.formQuestions.length - 1}
-                    className="text-slate-400 disabled:opacity-30"
-                    title="Dolů"
-                  >
-                    ↓
-                  </button>
-                </div>
-                <div className="flex-1 grid grid-cols-2 gap-2">
-                  <input
-                    className="input col-span-2"
-                    placeholder="Text otázky"
-                    value={q.label}
-                    onChange={(e) => updateQuestion(q.id, { label: e.target.value })}
-                  />
-                  <select
-                    className="input"
-                    value={q.type}
-                    onChange={(e) =>
-                      updateQuestion(q.id, { type: e.target.value as FormQuestion["type"] })
-                    }
-                  >
-                    <option value="text">Krátký text</option>
-                    <option value="textarea">Delší text</option>
-                    <option value="yesno">Ano / Ne</option>
-                    <option value="number">Číslo</option>
-                    <option value="select">Výběr z možností</option>
-                  </select>
-                  <label className="text-sm flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={!!q.required}
-                      onChange={(e) =>
-                        updateQuestion(q.id, { required: e.target.checked })
-                      }
-                    />
-                    Povinné
-                  </label>
-                  {q.type === "select" && (
+          <div className="space-y-3">
+            {data.formQuestions.map((q, i) => (
+              <div
+                key={q.id}
+                className="border border-slate-200 rounded-lg p-3 space-y-2"
+              >
+                <div className="flex gap-2 items-start">
+                  <div className="flex flex-col">
+                    <button
+                      onClick={() => moveQuestion(q.id, -1)}
+                      disabled={i === 0}
+                      className="text-slate-400 disabled:opacity-30"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      onClick={() => moveQuestion(q.id, 1)}
+                      disabled={i === data.formQuestions.length - 1}
+                      className="text-slate-400 disabled:opacity-30"
+                    >
+                      ↓
+                    </button>
+                  </div>
+                  <div className="flex-1 grid grid-cols-2 gap-2">
                     <input
                       className="input col-span-2"
-                      placeholder="Možnosti, oddělené čárkou (např. Ano, Ne, Možná)"
-                      value={(q.options ?? []).join(", ")}
+                      placeholder="Text otázky"
+                      value={q.label}
                       onChange={(e) =>
-                        updateQuestion(q.id, {
-                          options: e.target.value
-                            .split(",")
-                            .map((s) => s.trim())
-                            .filter(Boolean),
-                        })
+                        updateQuestion(q.id, { label: e.target.value })
                       }
                     />
-                  )}
+                    <select
+                      className="input"
+                      value={q.type}
+                      onChange={(e) =>
+                        updateQuestion(q.id, {
+                          type: e.target.value as FormQuestion["type"],
+                        })
+                      }
+                    >
+                      <option value="text">Krátký text</option>
+                      <option value="textarea">Delší text</option>
+                      <option value="yesno">Ano / Ne</option>
+                      <option value="number">Číslo</option>
+                      <option value="select">Výběr z možností</option>
+                    </select>
+                    <label className="text-sm flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={!!q.required}
+                        onChange={(e) =>
+                          updateQuestion(q.id, { required: e.target.checked })
+                        }
+                      />
+                      Povinné
+                    </label>
+                    {q.type === "select" && (
+                      <input
+                        className="input col-span-2"
+                        placeholder="Možnosti, oddělené čárkou"
+                        value={(q.options ?? []).join(", ")}
+                        onChange={(e) =>
+                          updateQuestion(q.id, {
+                            options: e.target.value
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter(Boolean),
+                          })
+                        }
+                      />
+                    )}
+                  </div>
+                  <button
+                    onClick={() => removeQuestion(q.id)}
+                    className="text-sm text-red-600 hover:underline"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button
-                  onClick={() => removeQuestion(q.id)}
-                  className="text-sm text-red-600 hover:underline"
-                >
-                  ✕
-                </button>
               </div>
-            </div>
-          ))}
-          {data.formQuestions.length === 0 && (
-            <p className="text-slate-500 text-sm">
-              Žádné vlastní otázky. Klikněte „+ Otázka" výše.
-            </p>
-          )}
-        </div>
+            ))}
+            {data.formQuestions.length === 0 && (
+              <p className="text-slate-500 text-sm text-center py-6">
+                Žádné vlastní otázky.
+              </p>
+            )}
+          </div>
 
-        <button onClick={saveDetails} disabled={savingDetails} className="btn-primary">
-          {savingDetails ? "Ukládám…" : "Uložit otázky"}
-        </button>
-      </section>
+          <div className="flex justify-between items-center pt-2">
+            <button onClick={addQuestion} className="btn-secondary">
+              + Otázka
+            </button>
+            <button
+              onClick={saveDetails}
+              disabled={saving}
+              className="btn-primary"
+            >
+              {saving ? "Ukládám…" : "Uložit otázky"}
+            </button>
+          </div>
+        </section>
+      )}
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: string;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+        active
+          ? "border-brand-600 text-brand-700"
+          : "border-transparent text-slate-500 hover:text-slate-900"
+      }`}
+    >
+      <span className="mr-1">{icon}</span>
+      {label}
+    </button>
   );
 }

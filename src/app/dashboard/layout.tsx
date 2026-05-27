@@ -23,52 +23,62 @@ export default async function DashboardLayout({
   if (!tenant) redirect("/login");
 
   return (
-    <div className="min-h-screen">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-lg font-semibold text-brand-700">
-              📅 {tenant.name}
-            </Link>
-            <nav className="flex gap-4 text-sm text-slate-600">
-              <Link href="/dashboard" className="hover:text-brand-700">
-                Rezervace
-              </Link>
-              <Link href="/dashboard/properties" className="hover:text-brand-700">
-                Nemovitosti
-              </Link>
-              <Link href="/dashboard/services" className="hover:text-brand-700">
-                Typy schůzek
-              </Link>
-              <Link href="/dashboard/team" className="hover:text-brand-700">
-                Tým
-              </Link>
-              <Link href="/dashboard/hours" className="hover:text-brand-700">
-                Pracovní doba
-              </Link>
-              <Link href="/dashboard/notifications" className="hover:text-brand-700">
-                Notifikace
-              </Link>
-              <Link href="/dashboard/settings" className="hover:text-brand-700">
-                Nastavení
-              </Link>
-            </nav>
-          </div>
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex justify-between items-center">
+          <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-brand-700">
+            <span className="text-lg">📅</span>
+            <span>{tenant.name}</span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-1 text-sm">
+            <NavItem href="/dashboard" label="Dashboard" />
+            <NavItem href="/dashboard/properties" label="Nemovitosti" />
+            <NavItem href="/dashboard/bookings" label="Rezervace" />
+            <NavItem href="/dashboard/settings" label="Nastavení" />
+          </nav>
           <div className="flex items-center gap-3 text-sm">
             <Link
               href={`/${tenant.slug}`}
               target="_blank"
-              className="text-slate-600 hover:text-brand-700"
+              className="hidden sm:inline text-slate-500 hover:text-brand-700"
+              title="Otevřít vaši veřejnou stránku"
             >
-              Veřejná stránka ↗
+              ↗ Veřejná stránka
             </Link>
-            <span className="text-slate-300">|</span>
-            <span className="text-slate-600">{session.user.email}</span>
             <SignOutButton />
           </div>
         </div>
+        {/* Mobile nav */}
+        <nav className="md:hidden flex border-t border-slate-200 text-xs overflow-x-auto">
+          <MobileNavItem href="/dashboard" label="Dashboard" />
+          <MobileNavItem href="/dashboard/properties" label="Nemovitosti" />
+          <MobileNavItem href="/dashboard/bookings" label="Rezervace" />
+          <MobileNavItem href="/dashboard/settings" label="Nastavení" />
+        </nav>
       </header>
       <main className="max-w-6xl mx-auto px-6 py-8">{children}</main>
     </div>
+  );
+}
+
+function NavItem({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="px-3 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+    >
+      {label}
+    </Link>
+  );
+}
+
+function MobileNavItem({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex-1 text-center py-2.5 text-slate-600 hover:bg-slate-50 whitespace-nowrap"
+    >
+      {label}
+    </Link>
   );
 }

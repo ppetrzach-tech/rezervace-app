@@ -17,12 +17,13 @@ export default async function TeamAdmin() {
   });
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Tým</h1>
-      <p className="text-slate-600 text-sm">
-        Osoby, ke kterým se klienti můžou objednat. Můžete být sám (jen vy) nebo
-        mít víc členů týmu.
-      </p>
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-2xl font-semibold">Tým</h2>
+        <p className="text-slate-600 text-sm">
+          Osoby, ke kterým se klienti můžou objednat.
+        </p>
+      </div>
       <TeamManager
         initialProviders={providers.map((p) => ({
           id: p.id,
