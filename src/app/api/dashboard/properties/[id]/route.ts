@@ -8,9 +8,19 @@ import { slugify } from "@/lib/tenant";
 const questionSchema = z.object({
   id: z.string(),
   label: z.string().min(1).max(200),
-  type: z.enum(["text", "textarea", "yesno", "select", "number"]),
+  type: z.enum([
+    "text",
+    "textarea",
+    "yesno",
+    "select",
+    "number",
+    "rating",
+    "date",
+    "phone",
+  ]),
   required: z.boolean().optional(),
   options: z.array(z.string()).optional(),
+  placeholder: z.string().optional(),
 });
 
 const schema = z.object({

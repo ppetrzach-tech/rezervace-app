@@ -7,13 +7,56 @@ import { format, addMinutes } from "date-fns";
 import { cs } from "date-fns/locale";
 import { CopyButton } from "../../CopyButton";
 
+type QuestionType =
+  | "text"
+  | "textarea"
+  | "yesno"
+  | "number"
+  | "select"
+  | "rating"
+  | "date"
+  | "phone";
+
 type FormQuestion = {
   id: string;
   label: string;
-  type: "text" | "textarea" | "yesno" | "select" | "number";
+  type: QuestionType;
   required?: boolean;
   options?: string[];
+  placeholder?: string;
 };
+
+const QUESTION_TYPES: {
+  type: QuestionType;
+  label: string;
+  icon: string;
+  color: string;
+  description: string;
+}[] = [
+  { type: "text", label: "Krátký text", icon: "📝", color: "blue", description: "Jednořádkový text" },
+  { type: "textarea", label: "Delší text", icon: "📄", color: "indigo", description: "Víceřádkový text" },
+  { type: "yesno", label: "Ano / Ne", icon: "✅", color: "green", description: "Tlačítka Ano nebo Ne" },
+  { type: "number", label: "Číslo", icon: "🔢", color: "amber", description: "Číselný vstup" },
+  { type: "select", label: "Výběr možností", icon: "📋", color: "purple", description: "Vyberte z předpřipravených možností" },
+  { type: "rating", label: "Hvězdičky 1–5", icon: "⭐", color: "orange", description: "Hodnocení od 1 do 5 hvězd" },
+  { type: "date", label: "Datum", icon: "📅", color: "pink", description: "Výběr data v kalendáři" },
+  { type: "phone", label: "Telefon", icon: "📞", color: "teal", description: "Tel. číslo s prefixem" },
+];
+
+const COLOR_CLASSES: Record<string, { border: string; bg: string; text: string; ring: string }> = {
+  blue: { border: "border-blue-300", bg: "bg-blue-50", text: "text-blue-700", ring: "ring-blue-500" },
+  indigo: { border: "border-indigo-300", bg: "bg-indigo-50", text: "text-indigo-700", ring: "ring-indigo-500" },
+  green: { border: "border-green-300", bg: "bg-green-50", text: "text-green-700", ring: "ring-green-500" },
+  amber: { border: "border-amber-300", bg: "bg-amber-50", text: "text-amber-700", ring: "ring-amber-500" },
+  purple: { border: "border-purple-300", bg: "bg-purple-50", text: "text-purple-700", ring: "ring-purple-500" },
+  orange: { border: "border-orange-300", bg: "bg-orange-50", text: "text-orange-700", ring: "ring-orange-500" },
+  pink: { border: "border-pink-300", bg: "bg-pink-50", text: "text-pink-700", ring: "ring-pink-500" },
+  teal: { border: "border-teal-300", bg: "bg-teal-50", text: "text-teal-700", ring: "ring-teal-500" },
+};
+
+function typeMeta(type: string) {
+  return QUESTION_TYPES.find((t) => t.type === type) ?? QUESTION_TYPES[0];
+}
 
 type Slot = {
   id?: string;
@@ -472,113 +515,52 @@ export function PropertyEditor({
       )}
 
       {tab === "questions" && (
-        <section className="card space-y-4">
-          <div>
-            <p className="text-sm text-slate-600">
-              Vlastní otázky pro klienta. Standardní otázky (jméno, email, telefon)
-              jsou v formuláři vždy.
+        <section className="space-y-4">
+          <div className="card bg-gradient-to-br from-brand-50 to-white border-brand-200">
+            <p className="text-sm text-slate-700">
+              ✨ Vlastní otázky pro klienta. Standardní otázky (jméno, email,
+              telefon) jsou v formuláři vždy automaticky.
             </p>
           </div>
 
-          <div className="space-y-3">
-            {data.formQuestions.map((q, i) => (
-              <div
-                key={q.id}
-                className="border border-slate-200 rounded-lg p-3 space-y-2"
-              >
-                <div className="flex gap-2 items-start">
-                  <div className="flex flex-col">
-                    <button
-                      onClick={() => moveQuestion(q.id, -1)}
-                      disabled={i === 0}
-                      className="text-slate-400 disabled:opacity-30"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      onClick={() => moveQuestion(q.id, 1)}
-                      disabled={i === data.formQuestions.length - 1}
-                      className="text-slate-400 disabled:opacity-30"
-                    >
-                      ↓
-                    </button>
-                  </div>
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <input
-                      className="input col-span-2"
-                      placeholder="Text otázky"
-                      value={q.label}
-                      onChange={(e) =>
-                        updateQuestion(q.id, { label: e.target.value })
-                      }
-                    />
-                    <select
-                      className="input"
-                      value={q.type}
-                      onChange={(e) =>
-                        updateQuestion(q.id, {
-                          type: e.target.value as FormQuestion["type"],
-                        })
-                      }
-                    >
-                      <option value="text">Krátký text</option>
-                      <option value="textarea">Delší text</option>
-                      <option value="yesno">Ano / Ne</option>
-                      <option value="number">Číslo</option>
-                      <option value="select">Výběr z možností</option>
-                    </select>
-                    <label className="text-sm flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={!!q.required}
-                        onChange={(e) =>
-                          updateQuestion(q.id, { required: e.target.checked })
-                        }
-                      />
-                      Povinné
-                    </label>
-                    {q.type === "select" && (
-                      <input
-                        className="input col-span-2"
-                        placeholder="Možnosti, oddělené čárkou"
-                        value={(q.options ?? []).join(", ")}
-                        onChange={(e) =>
-                          updateQuestion(q.id, {
-                            options: e.target.value
-                              .split(",")
-                              .map((s) => s.trim())
-                              .filter(Boolean),
-                          })
-                        }
-                      />
-                    )}
-                  </div>
-                  <button
-                    onClick={() => removeQuestion(q.id)}
-                    className="text-sm text-red-600 hover:underline"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            ))}
-            {data.formQuestions.length === 0 && (
-              <p className="text-slate-500 text-sm text-center py-6">
-                Žádné vlastní otázky.
+          {data.formQuestions.length === 0 ? (
+            <div className="card text-center py-10">
+              <div className="text-5xl mb-3">📝</div>
+              <p className="text-slate-500 mb-4">
+                Zatím žádné otázky. Přidejte první.
               </p>
-            )}
-          </div>
+              <button onClick={addQuestion} className="btn-primary">
+                + Přidat otázku
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {data.formQuestions.map((q, i) => (
+                <QuestionCard
+                  key={q.id}
+                  question={q}
+                  index={i}
+                  total={data.formQuestions.length}
+                  onUpdate={(patch) => updateQuestion(q.id, patch)}
+                  onRemove={() => removeQuestion(q.id)}
+                  onMove={(dir) => moveQuestion(q.id, dir)}
+                />
+              ))}
+            </div>
+          )}
 
           <div className="flex justify-between items-center pt-2">
-            <button onClick={addQuestion} className="btn-secondary">
-              + Otázka
-            </button>
+            {data.formQuestions.length > 0 && (
+              <button onClick={addQuestion} className="btn-secondary">
+                + Další otázka
+              </button>
+            )}
             <button
               onClick={saveDetails}
               disabled={saving}
-              className="btn-primary"
+              className="btn-primary ml-auto"
             >
-              {saving ? "Ukládám…" : "Uložit otázky"}
+              {saving ? "Ukládám…" : "💾 Uložit otázky"}
             </button>
           </div>
         </section>
@@ -610,5 +592,354 @@ function TabButton({
       <span className="mr-1">{icon}</span>
       {label}
     </button>
+  );
+}
+
+// === Question editor ===========================================================
+
+function QuestionCard({
+  question,
+  index,
+  total,
+  onUpdate,
+  onRemove,
+  onMove,
+}: {
+  question: FormQuestion;
+  index: number;
+  total: number;
+  onUpdate: (patch: Partial<FormQuestion>) => void;
+  onRemove: () => void;
+  onMove: (dir: -1 | 1) => void;
+}) {
+  const meta = typeMeta(question.type);
+  const c = COLOR_CLASSES[meta.color];
+
+  return (
+    <div
+      className={`bg-white rounded-xl shadow-sm border-l-4 ${c.border} border-r border-t border-b border-slate-200 overflow-hidden`}
+    >
+      {/* Hlavička */}
+      <div
+        className={`px-4 py-2 flex items-center justify-between ${c.bg} border-b border-slate-100`}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{meta.icon}</span>
+          <span className={`text-xs font-semibold uppercase ${c.text}`}>
+            {meta.label}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onMove(-1)}
+            disabled={index === 0}
+            className="text-slate-400 disabled:opacity-30 hover:text-slate-700 px-1"
+            title="Posunout nahoru"
+          >
+            ↑
+          </button>
+          <button
+            onClick={() => onMove(1)}
+            disabled={index === total - 1}
+            className="text-slate-400 disabled:opacity-30 hover:text-slate-700 px-1"
+            title="Posunout dolů"
+          >
+            ↓
+          </button>
+          <button
+            onClick={onRemove}
+            className="text-red-500 hover:text-red-700 px-1 ml-2"
+            title="Smazat"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      {/* Obsah */}
+      <div className="p-4 space-y-4">
+        {/* Otázka */}
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-1 uppercase">
+            Otázka
+          </label>
+          <input
+            className="w-full text-base font-medium border-0 border-b border-slate-200 px-0 py-1 focus:outline-none focus:border-brand-500 bg-transparent"
+            placeholder="Napište otázku…"
+            value={question.label}
+            onChange={(e) => onUpdate({ label: e.target.value })}
+          />
+        </div>
+
+        {/* Typ — pills */}
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-2 uppercase">
+            Typ odpovědi
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {QUESTION_TYPES.map((t) => {
+              const tc = COLOR_CLASSES[t.color];
+              const selected = question.type === t.type;
+              return (
+                <button
+                  key={t.type}
+                  onClick={() => onUpdate({ type: t.type })}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition ${
+                    selected
+                      ? `${tc.bg} ${tc.text} ring-2 ${tc.ring}`
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
+                  }`}
+                  title={t.description}
+                >
+                  <span className="mr-1">{t.icon}</span>
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Settings */}
+        <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+          <ToggleSwitch
+            label="Povinná otázka"
+            checked={!!question.required}
+            onChange={(v) => onUpdate({ required: v })}
+          />
+        </div>
+
+        {/* Type-specific extras */}
+        {question.type === "select" && (
+          <OptionsEditor
+            options={question.options ?? []}
+            onChange={(options) => onUpdate({ options })}
+            color={meta.color}
+          />
+        )}
+
+        {/* Live preview */}
+        <details className="bg-slate-50 rounded-lg border border-slate-100 p-3">
+          <summary className="cursor-pointer text-xs font-medium text-slate-500 uppercase">
+            👁 Náhled jak to klient uvidí
+          </summary>
+          <div className="mt-3 pt-3 border-t border-slate-200">
+            <QuestionPreview question={question} />
+          </div>
+        </details>
+      </div>
+    </div>
+  );
+}
+
+function ToggleSwitch({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${
+          checked ? "bg-brand-600" : "bg-slate-300"
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+            checked ? "translate-x-4" : "translate-x-0.5"
+          }`}
+        />
+      </button>
+      <span className="text-slate-700">{label}</span>
+    </label>
+  );
+}
+
+function OptionsEditor({
+  options,
+  onChange,
+  color,
+}: {
+  options: string[];
+  onChange: (next: string[]) => void;
+  color: string;
+}) {
+  const c = COLOR_CLASSES[color] ?? COLOR_CLASSES.purple;
+
+  function update(i: number, value: string) {
+    onChange(options.map((o, idx) => (idx === i ? value : o)));
+  }
+  function remove(i: number) {
+    onChange(options.filter((_, idx) => idx !== i));
+  }
+  function add() {
+    onChange([...options, ""]);
+  }
+  function move(i: number, dir: -1 | 1) {
+    const next = [...options];
+    const j = i + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-medium text-slate-500 uppercase">
+        Možnosti k výběru
+      </div>
+      {options.length === 0 && (
+        <p className="text-xs text-slate-400 italic py-1">
+          Zatím žádná možnost — přidejte první níže.
+        </p>
+      )}
+      <div className="space-y-1.5">
+        {options.map((opt, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className={`text-xs font-mono w-6 text-center ${c.text}`}>
+              {i + 1}.
+            </span>
+            <input
+              className="flex-1 px-3 py-1.5 rounded-md border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+              placeholder={`Možnost ${i + 1}`}
+              value={opt}
+              onChange={(e) => update(i, e.target.value)}
+              autoFocus={i === options.length - 1 && opt === ""}
+            />
+            <button
+              onClick={() => move(i, -1)}
+              disabled={i === 0}
+              className="text-slate-400 disabled:opacity-30 hover:text-slate-700"
+              title="Nahoru"
+            >
+              ↑
+            </button>
+            <button
+              onClick={() => move(i, 1)}
+              disabled={i === options.length - 1}
+              className="text-slate-400 disabled:opacity-30 hover:text-slate-700"
+              title="Dolů"
+            >
+              ↓
+            </button>
+            <button
+              onClick={() => remove(i)}
+              className="text-red-500 hover:text-red-700 px-1"
+              title="Smazat"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={add}
+        className={`text-sm font-medium px-3 py-1.5 rounded-md ${c.bg} ${c.text} hover:opacity-80`}
+      >
+        + Přidat možnost
+      </button>
+    </div>
+  );
+}
+
+function QuestionPreview({ question }: { question: FormQuestion }) {
+  const label = question.label || "(text otázky)";
+  const req = question.required ? " *" : "";
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-1">
+        {label}
+        {req}
+      </label>
+      {question.type === "text" && (
+        <input
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          placeholder="Sem klient napíše odpověď"
+          disabled
+        />
+      )}
+      {question.type === "textarea" && (
+        <textarea
+          rows={3}
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          placeholder="Sem klient napíše delší odpověď"
+          disabled
+        />
+      )}
+      {question.type === "yesno" && (
+        <div className="flex gap-2">
+          <button
+            disabled
+            className="px-4 py-2 rounded-lg border border-slate-200 text-sm bg-white"
+          >
+            ✓ Ano
+          </button>
+          <button
+            disabled
+            className="px-4 py-2 rounded-lg border border-slate-200 text-sm bg-white"
+          >
+            ✗ Ne
+          </button>
+        </div>
+      )}
+      {question.type === "number" && (
+        <input
+          type="number"
+          className="w-32 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          placeholder="0"
+          disabled
+        />
+      )}
+      {question.type === "select" && (
+        <div className="flex flex-wrap gap-1.5">
+          {(question.options ?? []).length === 0 ? (
+            <span className="text-xs text-slate-400 italic">
+              (zatím bez možností)
+            </span>
+          ) : (
+            (question.options ?? []).map((o, i) => (
+              <span
+                key={i}
+                className="px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-sm border border-purple-200"
+              >
+                {o}
+              </span>
+            ))
+          )}
+        </div>
+      )}
+      {question.type === "rating" && (
+        <div className="flex gap-1 text-2xl">
+          <span className="text-slate-300">★</span>
+          <span className="text-slate-300">★</span>
+          <span className="text-slate-300">★</span>
+          <span className="text-slate-300">★</span>
+          <span className="text-slate-300">★</span>
+        </div>
+      )}
+      {question.type === "date" && (
+        <input
+          type="date"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          disabled
+        />
+      )}
+      {question.type === "phone" && (
+        <input
+          type="tel"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          placeholder="+420 ___ ___ ___"
+          disabled
+        />
+      )}
+    </div>
   );
 }

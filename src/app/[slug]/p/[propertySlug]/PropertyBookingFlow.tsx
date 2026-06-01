@@ -7,7 +7,7 @@ import { cs } from "date-fns/locale";
 type FormQuestion = {
   id: string;
   label: string;
-  type: string;
+  type: string; // "text" | "textarea" | "yesno" | "select" | "number" | "rating" | "date" | "phone"
   required?: boolean;
   options?: string[];
 };
@@ -201,81 +201,12 @@ export function PropertyBookingFlow({
           </div>
 
           {listing.formQuestions.map((q) => (
-            <div key={q.id}>
-              <label className="label">
-                {q.label} {q.required && "*"}
-              </label>
-              {q.type === "textarea" ? (
-                <textarea
-                  required={q.required}
-                  rows={3}
-                  className="input"
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) =>
-                    setAnswers({ ...answers, [q.id]: e.target.value })
-                  }
-                />
-              ) : q.type === "yesno" ? (
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      required={q.required}
-                      name={`q-${q.id}`}
-                      checked={answers[q.id] === "Ano"}
-                      onChange={() => setAnswers({ ...answers, [q.id]: "Ano" })}
-                    />{" "}
-                    Ano
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      required={q.required}
-                      name={`q-${q.id}`}
-                      checked={answers[q.id] === "Ne"}
-                      onChange={() => setAnswers({ ...answers, [q.id]: "Ne" })}
-                    />{" "}
-                    Ne
-                  </label>
-                </div>
-              ) : q.type === "select" ? (
-                <select
-                  required={q.required}
-                  className="input"
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) =>
-                    setAnswers({ ...answers, [q.id]: e.target.value })
-                  }
-                >
-                  <option value="">— Vyberte —</option>
-                  {(q.options ?? []).map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              ) : q.type === "number" ? (
-                <input
-                  type="number"
-                  required={q.required}
-                  className="input"
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) =>
-                    setAnswers({ ...answers, [q.id]: e.target.value })
-                  }
-                />
-              ) : (
-                <input
-                  type="text"
-                  required={q.required}
-                  className="input"
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) =>
-                    setAnswers({ ...answers, [q.id]: e.target.value })
-                  }
-                />
-              )}
-            </div>
+            <QuestionField
+              key={q.id}
+              question={q}
+              value={answers[q.id] ?? ""}
+              onChange={(v) => setAnswers({ ...answers, [q.id]: v })}
+            />
           ))}
 
           <div>
@@ -296,5 +227,212 @@ export function PropertyBookingFlow({
         </form>
       )}
     </div>
+  );
+}
+
+// ============================================================================
+// Question field — vykreslí jakýkoliv typ otázky z formuláře
+// ============================================================================
+
+function QuestionField({
+  question,
+  value,
+  onChange,
+}: {
+  question: FormQuestion;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="label">
+        {question.label} {question.required && <span className="text-red-500">*</span>}
+      </label>
+      <QuestionInput question={question} value={value} onChange={onChange} />
+    </div>
+  );
+}
+
+function QuestionInput({
+  question,
+  value,
+  onChange,
+}: {
+  question: FormQuestion;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const required = !!question.required;
+
+  if (question.type === "textarea") {
+    return (
+      <textarea
+        required={required}
+        rows={3}
+        className="input"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
+  }
+
+  if (question.type === "yesno") {
+    return (
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onChange("Ano")}
+          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition ${
+            value === "Ano"
+              ? "bg-green-600 text-white border-green-600"
+              : "bg-white text-slate-700 border-slate-200 hover:border-green-500"
+          }`}
+        >
+          ✓ Ano
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange("Ne")}
+          className={`flex-1 px-4 py-2.5 rounded-lg border font-medium transition ${
+            value === "Ne"
+              ? "bg-red-500 text-white border-red-500"
+              : "bg-white text-slate-700 border-slate-200 hover:border-red-400"
+          }`}
+        >
+          ✗ Ne
+        </button>
+        {required && !value && (
+          <input
+            type="text"
+            required
+            tabIndex={-1}
+            className="sr-only"
+            value={value}
+            onChange={() => {}}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (question.type === "select") {
+    const opts = question.options ?? [];
+    return (
+      <div className="flex flex-wrap gap-2">
+        {opts.map((o) => {
+          const selected = value === o;
+          return (
+            <button
+              key={o}
+              type="button"
+              onClick={() => onChange(o)}
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                selected
+                  ? "bg-brand-600 text-white border-brand-600"
+                  : "bg-white text-slate-700 border-slate-200 hover:border-brand-500"
+              }`}
+            >
+              {o}
+            </button>
+          );
+        })}
+        {required && !value && (
+          <input
+            type="text"
+            required
+            tabIndex={-1}
+            className="sr-only"
+            value={value}
+            onChange={() => {}}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (question.type === "number") {
+    return (
+      <input
+        type="number"
+        required={required}
+        className="input"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
+  }
+
+  if (question.type === "rating") {
+    const numValue = parseInt(value) || 0;
+    return (
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(String(star))}
+            className={`text-3xl transition ${
+              star <= numValue
+                ? "text-yellow-400 hover:text-yellow-500"
+                : "text-slate-300 hover:text-yellow-300"
+            }`}
+            aria-label={`${star} z 5`}
+          >
+            ★
+          </button>
+        ))}
+        {numValue > 0 && (
+          <span className="ml-2 self-center text-sm text-slate-600">
+            {numValue}/5
+          </span>
+        )}
+        {required && !value && (
+          <input
+            type="text"
+            required
+            tabIndex={-1}
+            className="sr-only"
+            value={value}
+            onChange={() => {}}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (question.type === "date") {
+    return (
+      <input
+        type="date"
+        required={required}
+        className="input"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
+  }
+
+  if (question.type === "phone") {
+    return (
+      <input
+        type="tel"
+        required={required}
+        className="input"
+        placeholder="+420 ___ ___ ___"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
+  }
+
+  // default: text
+  return (
+    <input
+      type="text"
+      required={required}
+      className="input"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   );
 }

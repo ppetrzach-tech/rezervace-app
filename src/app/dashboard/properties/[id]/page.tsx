@@ -36,10 +36,29 @@ export default async function PropertyDetailPage({
   });
 
   // formQuestions je JSON; přetypujeme
+  type QType =
+    | "text"
+    | "textarea"
+    | "yesno"
+    | "select"
+    | "number"
+    | "rating"
+    | "date"
+    | "phone";
+  const ALLOWED_TYPES: QType[] = [
+    "text",
+    "textarea",
+    "yesno",
+    "select",
+    "number",
+    "rating",
+    "date",
+    "phone",
+  ];
   type Q = {
     id: string;
     label: string;
-    type: "text" | "textarea" | "yesno" | "select" | "number";
+    type: QType;
     required?: boolean;
     options?: string[];
   };
@@ -47,10 +66,9 @@ export default async function PropertyDetailPage({
     ? (listing.formQuestions as unknown as Q[]).map((q) => ({
         id: String(q.id),
         label: String(q.label),
-        type:
-          q.type === "textarea" || q.type === "yesno" || q.type === "select" || q.type === "number"
-            ? q.type
-            : "text",
+        type: (ALLOWED_TYPES as string[]).includes(q.type as string)
+          ? (q.type as QType)
+          : "text",
         required: !!q.required,
         options: Array.isArray(q.options) ? q.options : undefined,
       }))
