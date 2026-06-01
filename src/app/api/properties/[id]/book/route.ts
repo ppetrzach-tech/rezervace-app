@@ -171,6 +171,7 @@ export async function POST(
     note: booking.note,
     bookingId: booking.id,
     businessName: tenant.name,
+    replyTo: tenant.replyToEmail || tenant.ownerEmail || undefined,
     ics,
   });
 

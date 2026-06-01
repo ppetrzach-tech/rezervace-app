@@ -23,6 +23,7 @@ export type SendEmailParams = {
   subject: string;
   html: string;
   attachments?: EmailAttachment[];
+  replyTo?: string;
 };
 
 export type SendEmailResult = { ok: boolean; error?: string };
@@ -77,6 +78,7 @@ async function sendViaResend(p: SendEmailParams): Promise<SendEmailResult> {
       to: p.to,
       subject: p.subject,
       html: p.html,
+      replyTo: p.replyTo || undefined,
       attachments: p.attachments?.map((a) => ({
         filename: a.filename,
         content: a.content,
@@ -97,6 +99,7 @@ async function sendViaEcomail(p: SendEmailParams): Promise<SendEmailResult> {
       subject: p.subject,
       from_name: fromName || "Rezervace",
       from_email: fromEmail,
+      reply_to: p.replyTo || undefined,
       to: [{ email: p.to }],
       html: p.html,
       attachments:

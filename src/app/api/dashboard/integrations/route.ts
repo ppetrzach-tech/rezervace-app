@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 
 const schema = z.object({
   ownerEmail: z.string().email().or(z.literal("")),
+  replyToEmail: z.string().email().or(z.literal("")).optional().default(""),
   googleCalendarId: z.string().max(200).default(""),
   googleTimezone: z.string().max(60).default("Europe/Prague"),
 });
@@ -29,6 +30,7 @@ export async function PATCH(req: NextRequest) {
     where: { id: session.user.tenantId },
     data: {
       ownerEmail: parsed.data.ownerEmail || null,
+      replyToEmail: parsed.data.replyToEmail || null,
       googleCalendarId: parsed.data.googleCalendarId || null,
       googleTimezone: parsed.data.googleTimezone || "Europe/Prague",
     },

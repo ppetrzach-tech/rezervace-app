@@ -18,6 +18,7 @@ type BookingEmailData = {
   bookingId: string;
   businessName?: string;
   ics?: string;
+  replyTo?: string;
 };
 
 function formatDateCs(date: Date): string {
@@ -64,6 +65,7 @@ export async function sendBookingConfirmationEmail(
     subject: `Potvrzení rezervace — ${data.serviceName}`,
     html,
     attachments: icsAttachment(data.ics),
+    replyTo: data.replyTo,
   });
 }
 
@@ -98,6 +100,7 @@ export type TemplatedEmailParams = {
   bodyHtml: string;
   ics?: string;
   businessName?: string;
+  replyTo?: string;
 };
 
 export async function sendTemplatedEmail(
@@ -114,6 +117,7 @@ export async function sendTemplatedEmail(
     subject: p.subject,
     html,
     attachments: icsAttachment(p.ics),
+    replyTo: p.replyTo,
   });
 }
 

@@ -22,6 +22,10 @@ model Tenant {
   // Email vlastníka pro notifikace o nových rezervacích (může být jiný než login email)
   ownerEmail   String?
 
+  // Reply-To adresa — kam chodí odpovědi klientů na automatické emaily.
+  // Když je prázdné, použije se ownerEmail. Když i ten chybí, odpovědi jdou na From adresu.
+  replyToEmail String?
+
   // Google Calendar integrace (přes Service Account, sdílený kalendář)
   // Calendar ID typicky email uživatele "petr@gmail.com" nebo "...@group.calendar.google.com"
   googleCalendarId String?

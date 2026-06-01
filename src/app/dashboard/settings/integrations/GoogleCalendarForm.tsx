@@ -11,6 +11,7 @@ export function GoogleCalendarForm({
   serviceAccountEmail: string | null;
   initial: {
     ownerEmail: string;
+    replyToEmail: string;
     googleCalendarId: string;
     googleTimezone: string;
   };
@@ -177,6 +178,22 @@ export function GoogleCalendarForm({
           />
           <p className="text-xs text-slate-500 mt-1">
             Sem vám přijde email u každé nové rezervace. Může být jiný než login.
+          </p>
+        </div>
+
+        <div>
+          <label className="label">↩️ Reply-To (kam chodí odpovědi klientů)</label>
+          <input
+            type="email"
+            className="input"
+            placeholder="petr@zach-petr.cz"
+            value={data.replyToEmail}
+            onChange={(e) => setData({ ...data, replyToEmail: e.target.value })}
+          />
+          <p className="text-xs text-slate-500 mt-1">
+            Emaily klientovi se odesílají z <code>noreply@…</code>, ale když klient
+            klikne „Odpovědět", dorazí to sem. Když necháte prázdné, použije se email
+            pro notifikace výše.
           </p>
         </div>
 

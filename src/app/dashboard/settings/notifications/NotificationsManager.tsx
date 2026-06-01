@@ -155,6 +155,30 @@ export function NotificationsManager({
     router.refresh();
   }
 
+  async function sendTest(id: string) {
+    const to = prompt(
+      "Na jaký email poslat testovací ukázku?\n(Nechte prázdné = pošle se na váš email vlastníka.)",
+    );
+    if (to === null) return; // zrušeno
+    const res = await fetch(`/api/dashboard/notifications/${id}/test`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(to ? { to } : {}),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (res.ok && j.ok) {
+      alert(
+        j.channel === "sms"
+          ? `✅ Testovací SMS odeslána.\n\nNáhled:\n${j.preview ?? ""}`
+          : `✅ Testovací email odeslán na ${j.sentTo}.\n\nZkontrolujte schránku (i spam).`,
+      );
+    } else {
+      alert(
+        `❌ Nepodařilo se odeslat.\n${j.error ?? "Zkontrolujte, že je nastaven email provider (Ecomail/Resend)."}`,
+      );
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="card bg-brand-50 border-brand-200">
@@ -206,7 +230,14 @@ export function NotificationsManager({
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => sendTest(r.id)}
+                  className="text-sm text-green-700 hover:underline"
+                  title="Poslat testovací email s ukázkovými daty"
+                >
+                  📤 Test
+                </button>
                 <button
                   onClick={() => setEditing({ ...r })}
                   className="text-sm text-brand-700 hover:underline"

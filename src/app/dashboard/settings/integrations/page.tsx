@@ -39,6 +39,7 @@ export default async function IntegrationsPage() {
         serviceAccountEmail={serviceAccountEmail}
         initial={{
           ownerEmail: tenant.ownerEmail ?? "",
+          replyToEmail: tenant.replyToEmail ?? "",
           googleCalendarId: tenant.googleCalendarId ?? "",
           googleTimezone: tenant.googleTimezone,
         }}
