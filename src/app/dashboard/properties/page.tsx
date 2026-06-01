@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { CopyButton } from "../CopyButton";
+import { ShareButton } from "../ShareModal";
 
 export const dynamic = "force-dynamic";
 
@@ -92,29 +93,58 @@ export default async function PropertiesPage() {
                 key={l.id}
                 className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition group"
               >
-                {/* Gradient hlavička */}
+                {/* Hlavička — foto nebo gradient */}
                 <Link
                   href={`/dashboard/properties/${l.id}`}
-                  className={`block bg-gradient-to-br ${c.from} ${c.to} text-white p-5 relative overflow-hidden`}
+                  className={`block relative overflow-hidden ${l.imageUrl ? "" : `bg-gradient-to-br ${c.from} ${c.to}`} text-white`}
                 >
-                  <div className="absolute -right-4 -top-4 text-8xl opacity-20 group-hover:scale-110 transition-transform">
-                    {c.emoji}
-                  </div>
-                  <div className="relative">
-                    {!l.active && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 backdrop-blur mb-2 inline-block">
-                        neaktivní
-                      </span>
-                    )}
-                    <h3 className="font-bold text-lg leading-tight pr-12">
-                      {l.title}
-                    </h3>
-                    {l.address && (
-                      <p className="text-sm opacity-90 mt-0.5 truncate">
-                        📍 {l.address}
-                      </p>
-                    )}
-                  </div>
+                  {l.imageUrl ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={l.imageUrl}
+                        alt=""
+                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 p-5 flex flex-col justify-end">
+                        {!l.active && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 backdrop-blur mb-2 inline-block w-fit">
+                            neaktivní
+                          </span>
+                        )}
+                        <h3 className="font-bold text-lg leading-tight">
+                          {l.title}
+                        </h3>
+                        {l.address && (
+                          <p className="text-sm opacity-90 mt-0.5 truncate">
+                            📍 {l.address}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-5">
+                      <div className="absolute -right-4 -top-4 text-8xl opacity-20 group-hover:scale-110 transition-transform">
+                        {c.emoji}
+                      </div>
+                      <div className="relative">
+                        {!l.active && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 backdrop-blur mb-2 inline-block">
+                            neaktivní
+                          </span>
+                        )}
+                        <h3 className="font-bold text-lg leading-tight pr-12">
+                          {l.title}
+                        </h3>
+                        {l.address && (
+                          <p className="text-sm opacity-90 mt-0.5 truncate">
+                            📍 {l.address}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </Link>
 
                 {/* Body */}
@@ -145,7 +175,8 @@ export default async function PropertiesPage() {
                     >
                       Upravit
                     </Link>
-                    <CopyButton text={url} label="📋 Odkaz" />
+                    <CopyButton text={url} label="📋" />
+                    <ShareButton url={url} label="📱 QR" title={l.title} />
                     <Link
                       href={`/${tenant.slug}/p/${l.slug}`}
                       target="_blank"

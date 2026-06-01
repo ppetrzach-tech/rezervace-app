@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { format, addMinutes } from "date-fns";
 import { cs } from "date-fns/locale";
 import { CopyButton } from "../../CopyButton";
+import { ShareButton } from "../../ShareModal";
 
 type QuestionType =
   | "text"
@@ -71,6 +72,7 @@ type PropertyData = {
   title: string;
   description: string;
   address: string;
+  imageUrl: string;
   durationMinutes: number;
   providerId: string | null;
   active: boolean;
@@ -122,6 +124,7 @@ export function PropertyEditor({
           title: data.title,
           description: data.description,
           address: data.address,
+          imageUrl: data.imageUrl,
           durationMinutes: data.durationMinutes,
           providerId: data.providerId,
           active: data.active,
@@ -263,7 +266,10 @@ export function PropertyEditor({
           </div>
         </div>
         <div className="flex flex-col gap-2 items-end">
-          <CopyButton text={publicUrl} label="📋 Kopírovat odkaz" />
+          <div className="flex gap-2">
+            <CopyButton text={publicUrl} label="📋 Kopírovat" />
+            <ShareButton url={publicUrl} label="📱 QR kód" title={`Sdílení: ${data.title}`} />
+          </div>
           <label className="text-xs flex items-center gap-2 text-slate-600">
             <input
               type="checkbox"
@@ -330,6 +336,45 @@ export function PropertyEditor({
               onChange={(e) => setData({ ...data, address: e.target.value })}
               placeholder="např. Strojnická 12, Praha 7"
             />
+            <p className="text-xs text-slate-500 mt-1">
+              Adresa se automaticky propojí s odkazem do Mapy.cz a Google Maps.
+            </p>
+          </div>
+          <div>
+            <label className="label">📸 Hlavní fotka (URL)</label>
+            <input
+              className="input"
+              type="url"
+              placeholder="https://… (odkaz na obrázek)"
+              value={data.imageUrl}
+              onChange={(e) => setData({ ...data, imageUrl: e.target.value })}
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Nahrajte foto na Google Drive, Imgur nebo cokoliv jiného a sem
+              vložte přímý odkaz. Tip: na{" "}
+              <a
+                href="https://imgur.com/upload"
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand-700 hover:underline"
+              >
+                imgur.com/upload
+              </a>{" "}
+              přetáhněte foto, pravým klikem zkopírujte adresu obrázku.
+            </p>
+            {data.imageUrl && (
+              <div className="mt-2 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={data.imageUrl}
+                  alt=""
+                  className="w-full max-h-64 object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
+            )}
           </div>
           <div>
             <label className="label">Popis</label>

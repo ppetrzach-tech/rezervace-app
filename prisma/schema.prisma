@@ -196,6 +196,7 @@ model EventListing {
   title           String
   description     String?
   address         String?
+  imageUrl        String?  // hlavní fotka — URL na obrázek
   durationMinutes Int      @default(30)
   serviceId       String?
   service         Service? @relation(fields: [serviceId], references: [id])

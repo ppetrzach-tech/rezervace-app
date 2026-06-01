@@ -13,7 +13,10 @@ import {
   isBefore,
   startOfDay,
 } from "date-fns";
-import { cs } from "date-fns/locale";
+import { cs, enUS, sk } from "date-fns/locale";
+import { t as createT, type Locale as AppLocale } from "@/lib/i18n";
+
+const DATE_FNS_LOCALE = { cs, en: enUS, sk } as const;
 
 type FormQuestion = {
   id: string;
@@ -38,14 +41,18 @@ type Step = "date" | "form" | "done";
 export function PropertyBookingFlow({
   tenantSlug,
   tenantName,
+  locale = "cs",
   listing,
   slots,
 }: {
   tenantSlug: string;
   tenantName: string;
+  locale?: AppLocale;
   listing: Listing;
   slots: Slot[];
 }) {
+  const tr = createT(locale);
+  const dfLocale = DATE_FNS_LOCALE[locale] ?? cs;
   const [step, setStep] = useState<Step>("date");
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(
@@ -132,10 +139,8 @@ export function PropertyBookingFlow({
     return (
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
         <div className="text-5xl mb-3">😔</div>
-        <h2 className="text-xl font-semibold mb-2">Momentálně nejsou volné termíny</h2>
-        <p className="text-slate-600">
-          Zkuste to později nebo nás kontaktujte přímo.
-        </p>
+        <h2 className="text-xl font-semibold mb-2">{tr("noslots.title")}</h2>
+        <p className="text-slate-600">{tr("noslots.body")}</p>
       </div>
     );
   }
@@ -146,19 +151,19 @@ export function PropertyBookingFlow({
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white p-8 text-center">
           <div className="text-6xl mb-3">🎉</div>
-          <h2 className="text-2xl font-bold mb-2">Rezervace potvrzena!</h2>
-          <p className="opacity-90">Těšíme se na vás</p>
+          <h2 className="text-2xl font-bold mb-2">{tr("done.title")}</h2>
+          <p className="opacity-90">{tr("done.subtitle")}</p>
         </div>
         <div className="p-6 space-y-4">
           <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
             <div className="text-xs font-medium text-slate-500 uppercase mb-1">
-              Vaše prohlídka
+              {tr("done.your_viewing")}
             </div>
             <div className="font-semibold text-lg">{listing.title}</div>
             <div className="text-slate-600 mt-1">
               📅{" "}
               {format(new Date(selectedSlot.startsAt), "EEEE d. M. yyyy 'v' HH:mm", {
-                locale: cs,
+                locale: dfLocale,
               })}
             </div>
             {listing.address && (
@@ -171,29 +176,30 @@ export function PropertyBookingFlow({
               <span className="text-green-600">✓</span>
               <span>
                 {done.emailSent
-                  ? "Potvrzovací email odeslán na " + form.email
-                  : "Rezervace byla zaznamenána"}
+                  ? `${tr("done.email_sent")} ${form.email}`
+                  : tr("done.email_no")}
               </span>
             </div>
             {done.emailSent && (
               <div className="flex items-center gap-2 text-slate-700">
                 <span className="text-green-600">✓</span>
-                <span>V emailu najdete kalendářovou událost (.ics)</span>
+                <span>{tr("done.ics")}</span>
               </div>
             )}
             <div className="flex items-center gap-2 text-slate-700">
               <span className="text-green-600">✓</span>
-              <span>{tenantName} o vás ví a očekává vás</span>
+              <span>
+                {tenantName} {tr("done.aware")}
+              </span>
             </div>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
-            💡 <strong>Tip:</strong> Pokud nemůžete přijít, dejte nám prosím
-            včas vědět odpovědí na email s potvrzením.
+            💡 <strong>Tip:</strong> {tr("done.tip")}
           </div>
 
           <p className="text-xs text-slate-400 text-center pt-2">
-            Číslo: {done.bookingId}
+            {tr("done.booking_nr")} {done.bookingId}
           </p>
         </div>
       </div>
@@ -203,7 +209,14 @@ export function PropertyBookingFlow({
   return (
     <div className="space-y-6">
       {/* Stepper */}
-      <Stepper current={step} />
+      <Stepper
+        current={step}
+        labels={{
+          date: tr("step.date"),
+          form: tr("step.form"),
+          done: tr("step.done"),
+        }}
+      />
 
       {/* Step: Date selection */}
       {step === "date" && (
@@ -212,7 +225,7 @@ export function PropertyBookingFlow({
             <div>
               <h2 className="font-semibold flex items-center gap-2">
                 <span>📅</span>
-                <span>Vyberte termín prohlídky</span>
+                <span>{tr("calendar.title")}</span>
               </h2>
             </div>
           </div>
@@ -224,18 +237,18 @@ export function PropertyBookingFlow({
                 type="button"
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
                 className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600"
-                aria-label="Předchozí měsíc"
+                aria-label={tr("calendar.prev")}
               >
                 ←
               </button>
               <h3 className="font-semibold capitalize">
-                {format(currentMonth, "LLLL yyyy", { locale: cs })}
+                {format(currentMonth, "LLLL yyyy", { locale: dfLocale })}
               </h3>
               <button
                 type="button"
                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
                 className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600"
-                aria-label="Další měsíc"
+                aria-label={tr("calendar.next")}
               >
                 →
               </button>
@@ -293,18 +306,18 @@ export function PropertyBookingFlow({
           <div className="p-5">
             {!selectedDay ? (
               <p className="text-center text-slate-500 py-6">
-                Vyberte den s tečkou ⏺
+                {tr("calendar.pick_day")}
               </p>
             ) : daySlots.length === 0 ? (
               <p className="text-center text-slate-500 py-6">
-                V tento den nejsou volné časy. Vyberte jiný den.
+                {tr("calendar.no_times")}
               </p>
             ) : (
               <>
                 <div className="text-sm font-medium text-slate-700 mb-3">
-                  Volné časy:{" "}
+                  {tr("calendar.free_times")}:{" "}
                   <span className="text-slate-500 font-normal">
-                    {format(selectedDay, "EEEE d. M.", { locale: cs })}
+                    {format(selectedDay, "EEEE d. M.", { locale: dfLocale })}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -348,13 +361,13 @@ export function PropertyBookingFlow({
                 <span className="text-2xl">✓</span>
                 <div>
                   <div className="text-xs uppercase font-medium opacity-70">
-                    Vybraný termín
+                    {tr("form.selected_term")}
                   </div>
                   <div className="font-semibold">
                     {format(
                       new Date(selectedSlot.startsAt),
                       "EEEE d. M. yyyy 'v' HH:mm",
-                      { locale: cs },
+                      { locale: dfLocale },
                     )}
                   </div>
                 </div>
@@ -364,7 +377,7 @@ export function PropertyBookingFlow({
                 onClick={() => setStep("date")}
                 className="text-sm text-brand-700 hover:underline"
               >
-                Změnit
+                {tr("form.change")}
               </button>
             </div>
           </div>
@@ -378,27 +391,27 @@ export function PropertyBookingFlow({
           >
             <h2 className="font-semibold flex items-center gap-2">
               <span>📝</span>
-              <span>Vaše údaje</span>
+              <span>{tr("form.title")}</span>
             </h2>
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="label">Jméno a příjmení *</label>
+                <label className="label">{tr("form.name")} *</label>
                 <input
                   required
                   className="input"
-                  placeholder="Jan Novák"
+                  placeholder={tr("form.name_ph")}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
               <div>
-                <label className="label">Telefon *</label>
+                <label className="label">{tr("form.phone")} *</label>
                 <input
                   required
                   type="tel"
                   className="input"
-                  placeholder="+420 ___ ___ ___"
+                  placeholder={tr("form.phone_ph")}
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
@@ -406,12 +419,12 @@ export function PropertyBookingFlow({
             </div>
 
             <div>
-              <label className="label">Email *</label>
+              <label className="label">{tr("form.email")} *</label>
               <input
                 required
                 type="email"
                 className="input"
-                placeholder="jan@email.cz"
+                placeholder={tr("form.email_ph")}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
@@ -420,7 +433,7 @@ export function PropertyBookingFlow({
             {listing.formQuestions.length > 0 && (
               <div className="space-y-4 pt-2 border-t border-slate-100">
                 <h3 className="text-sm font-semibold text-slate-700">
-                  Doplňující informace
+                  {tr("form.extra_info")}
                 </h3>
                 {listing.formQuestions.map((q) => (
                   <QuestionField
@@ -434,11 +447,11 @@ export function PropertyBookingFlow({
             )}
 
             <div>
-              <label className="label">Poznámka (volitelná)</label>
+              <label className="label">{tr("form.note")}</label>
               <textarea
                 rows={2}
                 className="input"
-                placeholder="Cokoliv, co bychom měli vědět…"
+                placeholder={tr("form.note_ph")}
                 value={form.note}
                 onChange={(e) => setForm({ ...form, note: e.target.value })}
               />
@@ -456,7 +469,7 @@ export function PropertyBookingFlow({
                 onClick={() => setStep("date")}
                 className="btn-secondary"
               >
-                ← Zpět
+                {tr("form.back")}
               </button>
               <button
                 type="submit"
@@ -466,17 +479,16 @@ export function PropertyBookingFlow({
                 {submitting ? (
                   <>
                     <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Odesílám…
+                    {tr("form.submitting")}
                   </>
                 ) : (
-                  <>🎯 Potvrdit rezervaci</>
+                  <>{tr("form.submit")}</>
                 )}
               </button>
             </div>
 
             <p className="text-xs text-center text-slate-400">
-              Odesláním souhlasíte se zpracováním vašich údajů pro účely
-              prohlídky.
+              {tr("form.gdpr")}
             </p>
           </form>
         </div>
@@ -485,11 +497,17 @@ export function PropertyBookingFlow({
   );
 }
 
-function Stepper({ current }: { current: Step }) {
+function Stepper({
+  current,
+  labels,
+}: {
+  current: Step;
+  labels: { date: string; form: string; done: string };
+}) {
   const steps = [
-    { id: "date" as const, label: "Termín", icon: "📅" },
-    { id: "form" as const, label: "Údaje", icon: "📝" },
-    { id: "done" as const, label: "Hotovo", icon: "✓" },
+    { id: "date" as const, label: labels.date, icon: "📅" },
+    { id: "form" as const, label: labels.form, icon: "📝" },
+    { id: "done" as const, label: labels.done, icon: "✓" },
   ];
   const currentIdx = steps.findIndex((s) => s.id === current);
   return (

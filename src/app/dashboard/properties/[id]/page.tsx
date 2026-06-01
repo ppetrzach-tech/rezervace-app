@@ -83,6 +83,7 @@ export default async function PropertyDetailPage({
         title: listing.title,
         description: listing.description ?? "",
         address: listing.address ?? "",
+        imageUrl: listing.imageUrl ?? "",
         durationMinutes: listing.durationMinutes,
         providerId: listing.providerId,
         active: listing.active,
