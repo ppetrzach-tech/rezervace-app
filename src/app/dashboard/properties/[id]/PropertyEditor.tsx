@@ -73,6 +73,10 @@ type PropertyData = {
   description: string;
   address: string;
   imageUrl: string;
+  documentsUrl: string;
+  virtualTourUrl: string;
+  propertyWebUrl: string;
+  offerFormUrl: string;
   durationMinutes: number;
   providerId: string | null;
   active: boolean;
@@ -125,6 +129,10 @@ export function PropertyEditor({
           description: data.description,
           address: data.address,
           imageUrl: data.imageUrl,
+          documentsUrl: data.documentsUrl,
+          virtualTourUrl: data.virtualTourUrl,
+          propertyWebUrl: data.propertyWebUrl,
+          offerFormUrl: data.offerFormUrl,
           durationMinutes: data.durationMinutes,
           providerId: data.providerId,
           active: data.active,
@@ -439,6 +447,87 @@ export function PropertyEditor({
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Sekce: Odkazy */}
+          <div className="border-t border-slate-200 pt-4 space-y-3">
+            <h3 className="font-semibold flex items-center gap-2">
+              <span>🔗</span>
+              <span>Odkazy pro emailové šablony</span>
+            </h3>
+            <p className="text-xs text-slate-500">
+              Tyto URL se dosadí do emailů odeslaných klientům. Vyplňte ty,
+              které pro tuto nemovitost používáte.
+            </p>
+
+            <div>
+              <label className="label text-xs">
+                📂 Google Drive / dokumenty
+              </label>
+              <input
+                type="url"
+                className="input"
+                placeholder="https://drive.google.com/…"
+                value={data.documentsUrl}
+                onChange={(e) =>
+                  setData({ ...data, documentsUrl: e.target.value })
+                }
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                V emailu jako proměnná{" "}
+                <code>{"{{documents_url}}"}</code>
+              </p>
+            </div>
+
+            <div>
+              <label className="label text-xs">🎥 Virtuální prohlídka</label>
+              <input
+                type="url"
+                className="input"
+                placeholder="https://…"
+                value={data.virtualTourUrl}
+                onChange={(e) =>
+                  setData({ ...data, virtualTourUrl: e.target.value })
+                }
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                V emailu jako <code>{"{{virtual_tour_url}}"}</code>
+              </p>
+            </div>
+
+            <div>
+              <label className="label text-xs">🌐 Inzerát na webu</label>
+              <input
+                type="url"
+                className="input"
+                placeholder="https://www.sreality.cz/…"
+                value={data.propertyWebUrl}
+                onChange={(e) =>
+                  setData({ ...data, propertyWebUrl: e.target.value })
+                }
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                V emailu jako <code>{"{{property_web_url}}"}</code>
+              </p>
+            </div>
+
+            <div>
+              <label className="label text-xs">
+                📝 Nabídkový formulář (po prohlídce)
+              </label>
+              <input
+                type="url"
+                className="input"
+                placeholder="https://forms.google.com/…"
+                value={data.offerFormUrl}
+                onChange={(e) =>
+                  setData({ ...data, offerFormUrl: e.target.value })
+                }
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                V emailu jako <code>{"{{offer_form_url}}"}</code>
+              </p>
+            </div>
           </div>
 
           <div className="pt-2">

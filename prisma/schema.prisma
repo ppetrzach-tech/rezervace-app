@@ -197,6 +197,11 @@ model EventListing {
   description     String?
   address         String?
   imageUrl        String?  // hlavní fotka — URL na obrázek
+  // Odkazy specifické pro nemovitost (volitelné, použité v emailových šablonách):
+  documentsUrl    String?  // Google Drive / složka s dokumenty, foto, půdorysy
+  virtualTourUrl  String?  // Odkaz na virtuální prohlídku
+  propertyWebUrl  String?  // Inzerát na webu (Sreality, Bezrealitky, vlastní web)
+  offerFormUrl    String?  // Nabídkový formulář (Google Form, Typeform, vlastní)
   durationMinutes Int      @default(30)
   serviceId       String?
   service         Service? @relation(fields: [serviceId], references: [id])
