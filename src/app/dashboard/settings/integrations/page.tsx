@@ -17,6 +17,8 @@ export default async function IntegrationsPage() {
   if (!tenant) redirect("/login");
 
   const resendOk = !!process.env.RESEND_API_KEY;
+  const ecomailOk = !!process.env.ECOMAIL_API_KEY;
+  const emailProviderName = ecomailOk ? "Ecomail" : resendOk ? "Resend" : null;
   const gosmsOk = !!(
     process.env.GOSMS_CLIENT_ID && process.env.GOSMS_CLIENT_SECRET
   );
@@ -42,13 +44,54 @@ export default async function IntegrationsPage() {
         }}
       />
 
+      <div className="card">
+        <h3 className="font-semibold flex items-center gap-2">
+          <span>📧</span>
+          <span>Odesílání emailů</span>
+          {emailProviderName ? (
+            <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 ml-auto">
+              ✓ {emailProviderName}
+            </span>
+          ) : (
+            <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 ml-auto">
+              ⚠ nenakonfigurováno
+            </span>
+          )}
+        </h3>
+        <p className="text-sm text-slate-600 mt-1">
+          Aplikace podporuje dvě email služby — stačí jedna. Pokud máte obě
+          nakonfigurované, použije se Ecomail.
+        </p>
+      </div>
+
       <IntegrationCard
-        name="Resend (Email)"
-        emoji="📧"
-        connected={resendOk}
-        description="Odesílá potvrzovací a připomínkové emaily klientům i vám."
+        name="Ecomail (transakční email)"
+        emoji="✉️"
+        connected={ecomailOk}
+        description="Český provider, transakční API. Pokud už ho používáte, ideální. Vyžaduje aktivovaný transakční plán."
         setupSteps={[
-          "Zaregistrujte se na resend.com (zdarma 100 emailů/den)",
+          "V Ecomail dashboardu → Nastavení → API klíče",
+          "Vygenerujte API klíč",
+          "(Volitelné) ověřte svou doménu pro lepší doručitelnost",
+          "Přidejte do Vercel Settings → Environment Variables:",
+        ]}
+        envVars={[
+          { key: "ECOMAIL_API_KEY", example: "..." },
+          {
+            key: "EMAIL_FROM",
+            example: "Vaše firma <noreply@vasedomena.cz>",
+          },
+        ]}
+        link="https://ecomail.cz"
+      />
+
+      <IntegrationCard
+        name="Resend (transakční email)"
+        emoji="✉️"
+        connected={resendOk}
+        description="Alternativa k Ecomailu. Zdarma 100 emailů/den, snadné nastavení."
+        setupSteps={[
+          "Zaregistrujte se na resend.com (zdarma)",
           "Vygenerujte API klíč",
           "Verifikujte vlastní doménu",
           "Přidejte do Vercel Settings → Environment Variables:",
@@ -57,7 +100,7 @@ export default async function IntegrationsPage() {
           { key: "RESEND_API_KEY", example: "re_xxxxxxxxx" },
           {
             key: "EMAIL_FROM",
-            example: `Vaše firma <noreply@vasedomena.cz>`,
+            example: "Vaše firma <noreply@vasedomena.cz>",
           },
         ]}
         link="https://resend.com"
