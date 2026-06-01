@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { getTenantBySlug } from "@/lib/tenant";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 import { generateIcs } from "@/lib/ics";
+import { createCalendarEvent, isCalendarConfigured } from "@/lib/google-calendar";
+import { sendOwnerNewBookingEmail } from "@/lib/owner-notify";
 
 const schema = z.object({
   tenantSlug: z.string(),
@@ -172,8 +174,80 @@ export async function POST(
     ics,
   });
 
+  // Google Calendar — vytvoříme událost ve vlastníkově kalendáři (pokud je nastavený).
+  let googleEventLink: string | null = null;
+  if (tenant.googleCalendarId && isCalendarConfigured()) {
+    const answersText = (answers ?? [])
+      .filter((a) => a.value)
+      .map((a) => `${a.label}: ${a.value}`)
+      .join("\n");
+    const desc = [
+      listing.description,
+      "",
+      `Klient: ${clientRecord.name}`,
+      `Email: ${clientRecord.email}`,
+      `Telefon: ${clientRecord.phone}`,
+      booking.note ? `Poznámka: ${booking.note}` : "",
+      answersText ? `\n${answersText}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const gcalRes = await createCalendarEvent({
+      calendarId: tenant.googleCalendarId,
+      timezone: tenant.googleTimezone,
+      summary: `🏠 ${listing.title} — ${clientRecord.name}`,
+      description: desc,
+      location: listing.address ?? undefined,
+      startsAt: slot.startsAt,
+      endsAt: slot.endsAt,
+      attendees: [
+        {
+          email: clientRecord.email,
+          displayName: clientRecord.name,
+        },
+      ],
+    });
+    if (gcalRes.ok) {
+      googleEventLink = gcalRes.htmlLink ?? null;
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: { googleEventId: gcalRes.eventId },
+      });
+    } else {
+      console.warn("[book] Google Calendar event create failed:", gcalRes.error);
+    }
+  }
+
+  // Email vlastníkovi (makléři)
+  let ownerEmailSent = false;
+  if (tenant.ownerEmail) {
+    const baseUrl = process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+    const ownerRes = await sendOwnerNewBookingEmail({
+      ownerEmail: tenant.ownerEmail,
+      businessName: tenant.name,
+      serviceName: listing.title,
+      providerName: listing.provider?.name ?? tenant.name,
+      clientName: clientRecord.name,
+      clientEmail: clientRecord.email,
+      clientPhone: clientRecord.phone,
+      clientNote: booking.note,
+      startsAt: slot.startsAt,
+      durationMinutes: listing.durationMinutes,
+      location: listing.address,
+      bookingId: booking.id,
+      publicBookingsUrl: `${baseUrl}/dashboard/bookings`,
+      customAnswers: answers,
+      googleEventLink,
+      ics,
+    });
+    ownerEmailSent = ownerRes.ok;
+  }
+
   return NextResponse.json({
     bookingId: booking.id,
     emailSent: emailRes.ok,
+    ownerEmailSent,
+    googleSynced: !!googleEventLink,
   });
 }

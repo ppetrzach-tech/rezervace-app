@@ -6,6 +6,10 @@ import { isSlotStillFree } from "@/lib/slots";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 import { sendBookingConfirmationSms } from "@/lib/sms";
 import { getTenantBySlug } from "@/lib/tenant";
+import { generateIcs } from "@/lib/ics";
+import { createCalendarEvent, isCalendarConfigured } from "@/lib/google-calendar";
+import { sendOwnerNewBookingEmail } from "@/lib/owner-notify";
+import { locationLabel } from "@/lib/branding";
 
 const bodySchema = z.object({
   tenantSlug: z.string().min(1),
@@ -112,6 +116,17 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  const ics = generateIcs({
+    uid: `booking-${booking.id}@rezervace`,
+    title: `${service.name} — ${tenant.name}`,
+    description: service.description ?? undefined,
+    location: service.locationDetail ?? undefined,
+    startsAt: startsAtDate,
+    endsAt: endsAtDate,
+    organizerName: tenant.name,
+    organizerEmail: provider.email ?? undefined,
+  });
+
   const emailRes = await sendBookingConfirmationEmail({
     clientName: clientRecord.name,
     clientEmail: clientRecord.email,
@@ -126,6 +141,7 @@ export async function POST(req: NextRequest) {
     note: booking.note,
     bookingId: booking.id,
     businessName: tenant.name,
+    ics,
   });
 
   const smsRes = await sendBookingConfirmationSms({
@@ -136,9 +152,71 @@ export async function POST(req: NextRequest) {
     startsAt: startsAtDate,
   });
 
+  // Google Calendar — vytvoříme událost u vlastníka
+  let googleEventLink: string | null = null;
+  if (tenant.googleCalendarId && isCalendarConfigured()) {
+    const desc = [
+      service.description,
+      "",
+      `Klient: ${clientRecord.name}`,
+      `Email: ${clientRecord.email}`,
+      `Telefon: ${clientRecord.phone}`,
+      booking.note ? `Poznámka: ${booking.note}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    const gcalRes = await createCalendarEvent({
+      calendarId: tenant.googleCalendarId,
+      timezone: tenant.googleTimezone,
+      summary: `${service.name} — ${clientRecord.name}`,
+      description: desc,
+      location: service.locationDetail ?? undefined,
+      startsAt: startsAtDate,
+      endsAt: endsAtDate,
+      attendees: [
+        { email: clientRecord.email, displayName: clientRecord.name },
+      ],
+    });
+    if (gcalRes.ok) {
+      googleEventLink = gcalRes.htmlLink ?? null;
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: { googleEventId: gcalRes.eventId },
+      });
+    } else {
+      console.warn("[book] Google Calendar event create failed:", gcalRes.error);
+    }
+  }
+
+  // Email vlastníkovi
+  let ownerEmailSent = false;
+  if (tenant.ownerEmail) {
+    const baseUrl = process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+    const ownerRes = await sendOwnerNewBookingEmail({
+      ownerEmail: tenant.ownerEmail,
+      businessName: tenant.name,
+      serviceName: service.name,
+      providerName: provider.name,
+      clientName: clientRecord.name,
+      clientEmail: clientRecord.email,
+      clientPhone: clientRecord.phone,
+      clientNote: booking.note,
+      startsAt: startsAtDate,
+      durationMinutes: service.durationMinutes,
+      location: service.locationDetail ?? locationLabel(service.locationType),
+      bookingId: booking.id,
+      publicBookingsUrl: `${baseUrl}/dashboard/bookings`,
+      googleEventLink,
+      ics,
+    });
+    ownerEmailSent = ownerRes.ok;
+  }
+
   return NextResponse.json({
     bookingId: booking.id,
     emailSent: emailRes.ok,
     smsSent: smsRes.ok,
+    ownerEmailSent,
+    googleSynced: !!googleEventLink,
   });
 }

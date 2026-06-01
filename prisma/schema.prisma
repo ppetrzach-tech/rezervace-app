@@ -18,6 +18,15 @@ model Tenant {
   tagline      String?
   primaryColor String   @default("2563eb")
   active       Boolean  @default(true)
+
+  // Email vlastníka pro notifikace o nových rezervacích (může být jiný než login email)
+  ownerEmail   String?
+
+  // Google Calendar integrace (přes Service Account, sdílený kalendář)
+  // Calendar ID typicky email uživatele "petr@gmail.com" nebo "...@group.calendar.google.com"
+  googleCalendarId String?
+  googleTimezone   String  @default("Europe/Prague")
+
   createdAt    DateTime @default(now())
 
   users             User[]
@@ -153,6 +162,8 @@ model Booking {
   status          String   @default("confirmed") // confirmed | cancelled | completed
   note            String?
   reminderSentAt  DateTime?
+  // ID události v Google Calendar (pro update/delete)
+  googleEventId   String?
   createdAt       DateTime @default(now())
 
   // Nemovitosti / event listing (volitelné — pro makléřský flow)

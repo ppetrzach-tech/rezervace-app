@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { deleteCalendarEvent } from "@/lib/google-calendar";
 
 export async function POST(
   _req: NextRequest,
@@ -30,5 +31,22 @@ export async function POST(
     where: { id: params.id },
     data: { status: "cancelled" },
   });
+
+  // Smažeme i událost v Google Calendar (pokud byla vytvořena)
+  if (booking.googleEventId) {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: booking.tenantId },
+    });
+    if (tenant?.googleCalendarId) {
+      const res = await deleteCalendarEvent(
+        tenant.googleCalendarId,
+        booking.googleEventId,
+      );
+      if (!res.ok) {
+        console.warn("[cancel] Google Calendar delete failed:", res.error);
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }

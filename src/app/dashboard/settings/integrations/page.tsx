@@ -1,33 +1,52 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { getServiceAccountEmail, isCalendarConfigured } from "@/lib/google-calendar";
+import { GoogleCalendarForm } from "./GoogleCalendarForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function IntegrationsPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect("/login");
+  if (!session?.user?.tenantId) redirect("/login");
 
-  // Detekce, jestli jsou nastavené API klíče (jen check existence)
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: session.user.tenantId },
+  });
+  if (!tenant) redirect("/login");
+
   const resendOk = !!process.env.RESEND_API_KEY;
   const gosmsOk = !!(
     process.env.GOSMS_CLIENT_ID && process.env.GOSMS_CLIENT_SECRET
   );
+  const gcalGloballyOk = isCalendarConfigured();
+  const serviceAccountEmail = getServiceAccountEmail();
 
   return (
     <div className="max-w-2xl space-y-4">
       <div>
         <h2 className="text-2xl font-semibold">Integrace</h2>
         <p className="text-slate-600 text-sm">
-          Stav napojení na externí služby pro odesílání emailů a SMS.
+          Napojení na Google Calendar, email a SMS.
         </p>
       </div>
+
+      <GoogleCalendarForm
+        gcalGloballyOk={gcalGloballyOk}
+        serviceAccountEmail={serviceAccountEmail}
+        initial={{
+          ownerEmail: tenant.ownerEmail ?? "",
+          googleCalendarId: tenant.googleCalendarId ?? "",
+          googleTimezone: tenant.googleTimezone,
+        }}
+      />
 
       <IntegrationCard
         name="Resend (Email)"
         emoji="📧"
         connected={resendOk}
-        description="Odesílá potvrzovací a připomínkové emaily klientům."
+        description="Odesílá potvrzovací a připomínkové emaily klientům i vám."
         setupSteps={[
           "Zaregistrujte se na resend.com (zdarma 100 emailů/den)",
           "Vygenerujte API klíč",
