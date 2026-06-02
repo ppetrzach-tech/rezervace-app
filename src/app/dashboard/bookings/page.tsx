@@ -144,7 +144,13 @@ export default async function BookingsPage({
                   {isOwner && (
                     <td className="p-3">{b.provider.name}</td>
                   )}
-                  <td className="p-3 text-right">
+                  <td className="p-3 text-right whitespace-nowrap">
+                    <Link
+                      href={`/dashboard/bookings/${b.id}`}
+                      className="text-sm text-brand-700 hover:underline mr-3"
+                    >
+                      Detail
+                    </Link>
                     {b.status !== "cancelled" && <CancelButton bookingId={b.id} />}
                   </td>
                 </tr>

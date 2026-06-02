@@ -153,6 +153,19 @@ export async function POST(req: NextRequest) {
     startsAt: startsAtDate,
   });
 
+  // Zalogovat potvrzovací email + SMS do historie notifikací
+  await prisma.notificationLog.createMany({
+    data: [
+      {
+        bookingId: booking.id,
+        ruleId: null,
+        channel: "email",
+        status: emailRes.ok ? "sent" : "failed",
+        error: emailRes.error ?? null,
+      },
+    ],
+  }).catch(() => {});
+
   // Google Calendar — vytvoříme událost u vlastníka
   let googleEventLink: string | null = null;
   if (tenant.googleCalendarId && isCalendarConfigured()) {
