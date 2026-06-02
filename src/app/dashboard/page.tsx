@@ -24,12 +24,10 @@ export default async function DashboardHome() {
   const weekStart = today;
   const weekEnd = addDays(today, 7);
 
-  const baseFilter =
-    session.user.role === "owner"
-      ? { tenantId }
-      : session.user.providerId
-        ? { tenantId, providerId: session.user.providerId }
-        : { id: "__nothing__" };
+  // owner i asistent (staff bez providerId) vidí vše; staff napojený na providera jen své
+  const baseFilter = session.user.providerId
+    ? { tenantId, providerId: session.user.providerId }
+    : { tenantId };
 
   const [
     todayBookings,

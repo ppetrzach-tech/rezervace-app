@@ -21,12 +21,10 @@ export default async function BookingsPage({
   const filter = searchParams.filter ?? "upcoming";
   const isOwner = session.user.role === "owner";
 
-  const baseFilter =
-    isOwner
-      ? { tenantId }
-      : session.user.providerId
-        ? { tenantId, providerId: session.user.providerId }
-        : { id: "__nothing__" };
+  // owner i asistent (staff bez providerId) vidí vše; staff napojený na providera jen své
+  const baseFilter = session.user.providerId
+    ? { tenantId, providerId: session.user.providerId }
+    : { tenantId };
 
   const now = new Date();
   const today = startOfDay(now);
