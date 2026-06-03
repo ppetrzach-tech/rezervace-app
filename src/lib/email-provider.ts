@@ -105,11 +105,12 @@ async function sendViaEcomail(p: SendEmailParams): Promise<SendEmailResult> {
       attachments:
         p.attachments && p.attachments.length > 0
           ? p.attachments.map((a) => ({
-              file_name: a.filename,
-              file_mime: a.filename.endsWith(".ics")
+              // Ecomail v2 transactional API očekává: type, name, content (base64)
+              type: a.filename.endsWith(".ics")
                 ? "text/calendar"
                 : "application/octet-stream",
-              file_content: a.content, // base64
+              name: a.filename,
+              content: a.content, // base64
             }))
           : undefined,
     },
