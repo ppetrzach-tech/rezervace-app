@@ -24,21 +24,32 @@ const questionSchema = z.object({
   placeholder: z.string().optional(),
 });
 
+// URL pole jsou tolerantní — přijmou i odkaz bez https:// (doplníme ho sami).
+const looseUrl = z.string().max(1000).optional().default("");
+
 const schema = z.object({
   slug: z.string().min(1).max(60),
   title: z.string().min(1).max(200),
   address: z.string().max(300).optional().default(""),
   description: z.string().max(2000).optional().default(""),
-  imageUrl: z.string().url().or(z.literal("")).optional().default(""),
-  documentsUrl: z.string().url().or(z.literal("")).optional().default(""),
-  virtualTourUrl: z.string().url().or(z.literal("")).optional().default(""),
-  propertyWebUrl: z.string().url().or(z.literal("")).optional().default(""),
-  offerFormUrl: z.string().url().or(z.literal("")).optional().default(""),
+  imageUrl: looseUrl,
+  documentsUrl: looseUrl,
+  virtualTourUrl: looseUrl,
+  propertyWebUrl: looseUrl,
+  offerFormUrl: looseUrl,
   durationMinutes: z.number().int().min(5).max(8 * 60),
   providerId: z.string().nullable(),
   active: z.boolean(),
   formQuestions: z.array(questionSchema),
 });
+
+/** Doplní https:// pokud odkaz nemá schéma. Prázdné nechá prázdné. */
+function normalizeUrl(v: string): string {
+  const s = (v || "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  return `https://${s}`;
+}
 
 export async function PATCH(
   req: NextRequest,
@@ -63,7 +74,12 @@ export async function PATCH(
   }
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Neplatná data" }, { status: 400 });
+    const first = parsed.error.errors[0];
+    const where = first?.path?.join(".") ?? "";
+    return NextResponse.json(
+      { error: `Neplatná data${where ? ` (pole: ${where})` : ""}: ${first?.message ?? ""}` },
+      { status: 400 },
+    );
   }
   const data = parsed.data;
 
@@ -93,11 +109,11 @@ export async function PATCH(
       title: data.title,
       description: data.description || null,
       address: data.address || null,
-      imageUrl: data.imageUrl || null,
-      documentsUrl: data.documentsUrl || null,
-      virtualTourUrl: data.virtualTourUrl || null,
-      propertyWebUrl: data.propertyWebUrl || null,
-      offerFormUrl: data.offerFormUrl || null,
+      imageUrl: normalizeUrl(data.imageUrl) || null,
+      documentsUrl: normalizeUrl(data.documentsUrl) || null,
+      virtualTourUrl: normalizeUrl(data.virtualTourUrl) || null,
+      propertyWebUrl: normalizeUrl(data.propertyWebUrl) || null,
+      offerFormUrl: normalizeUrl(data.offerFormUrl) || null,
       durationMinutes: data.durationMinutes,
       providerId: data.providerId,
       active: data.active,

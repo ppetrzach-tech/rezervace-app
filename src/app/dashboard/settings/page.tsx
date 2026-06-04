@@ -3,13 +3,15 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { SettingsForm } from "./SettingsForm";
+import { isOwner } from "@/lib/perms";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.tenantId) redirect("/login");
-  if (session.user.role !== "owner") redirect("/dashboard");
+  // Manažer nemá přístup k Firmě → pošli ho na první dostupnou záložku (Notifikace)
+  if (!isOwner(session.user)) redirect("/dashboard/settings/notifications");
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.user.tenantId },
