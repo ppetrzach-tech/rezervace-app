@@ -7,6 +7,7 @@ import { format, addMinutes } from "date-fns";
 import { cs } from "date-fns/locale";
 import { CopyButton } from "../../CopyButton";
 import { ShareButton } from "../../ShareModal";
+import { DuplicateButton } from "../DuplicateButton";
 
 type QuestionType =
   | "text"
@@ -275,6 +276,7 @@ export function PropertyEditor({
         </div>
         <div className="flex flex-col gap-2 items-end">
           <div className="flex gap-2">
+            <DuplicateButton propertyId={data.id} label="⧉ Duplikovat" />
             <CopyButton text={publicUrl} label="📋 Kopírovat" />
             <ShareButton url={publicUrl} label="📱 QR kód" title={`Sdílení: ${data.title}`} />
           </div>

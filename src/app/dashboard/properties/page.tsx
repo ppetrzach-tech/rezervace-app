@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import { CopyButton } from "../CopyButton";
 import { ShareButton } from "../ShareModal";
+import { DuplicateButton } from "./DuplicateButton";
 
 export const dynamic = "force-dynamic";
 
@@ -168,13 +169,14 @@ export default async function PropertiesPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Link
                       href={`/dashboard/properties/${l.id}`}
                       className="btn-secondary text-xs flex-1 justify-center"
                     >
                       Upravit
                     </Link>
+                    <DuplicateButton propertyId={l.id} label="⧉ Duplikovat" />
                     <CopyButton text={url} label="📋" />
                     <ShareButton url={url} label="📱 QR" title={l.title} />
                     <Link
