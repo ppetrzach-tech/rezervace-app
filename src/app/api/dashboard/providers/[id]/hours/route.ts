@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { canManage } from "@/lib/perms";
 
 const schema = z.object({
   hours: z.array(
@@ -29,11 +30,8 @@ export async function PUT(
   });
   if (!provider) return NextResponse.json({ error: "Nenalezeno" }, { status: 404 });
 
-  // Provider může editovat jen vlastní hodiny; owner všechny
-  if (
-    session.user.role !== "owner" &&
-    session.user.providerId !== provider.id
-  ) {
+  // Owner/manažer může editovat všechny hodiny; provider-staff jen vlastní
+  if (!canManage(session.user) && session.user.providerId !== provider.id) {
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
 

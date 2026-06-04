@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/tenant";
+import { canManage } from "@/lib/perms";
 
 const schema = z.object({
   title: z.string().min(1).max(200),
@@ -15,7 +16,7 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId || session.user.role !== "owner") {
+  if (!session?.user?.tenantId || !canManage(session.user)) {
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
   const tenantId = session.user.tenantId;

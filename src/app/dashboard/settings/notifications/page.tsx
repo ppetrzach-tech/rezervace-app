@@ -3,13 +3,14 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { NotificationsManager } from "./NotificationsManager";
+import { canManage } from "@/lib/perms";
 
 export const dynamic = "force-dynamic";
 
 export default async function NotificationsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.tenantId) redirect("/login");
-  if (session.user.role !== "owner") redirect("/dashboard");
+  if (!canManage(session.user)) redirect("/dashboard");
 
   const rules = await prisma.notificationRule.findMany({
     where: { tenantId: session.user.tenantId },

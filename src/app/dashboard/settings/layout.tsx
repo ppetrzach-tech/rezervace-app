@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { isOwner } from "@/lib/perms";
 
 export const dynamic = "force-dynamic";
 
@@ -13,15 +14,24 @@ export default async function SettingsLayout({
   const session = await getServerSession(authOptions);
   if (!session?.user?.tenantId) redirect("/login");
 
-  const tabs: { href: string; label: string; icon: string }[] = [
-    { href: "/dashboard/settings", label: "Firma", icon: "🏢" },
-    { href: "/dashboard/settings/notifications", label: "Notifikace", icon: "🔔" },
-    { href: "/dashboard/settings/team", label: "Tým", icon: "👥" },
-    { href: "/dashboard/settings/hours", label: "Pracovní doba", icon: "🕐" },
-    { href: "/dashboard/settings/services", label: "Typy schůzek", icon: "🛍" },
-    { href: "/dashboard/settings/integrations", label: "Integrace", icon: "🔌" },
-    { href: "/dashboard/settings/account", label: "Účet", icon: "🔑" },
+  const owner = isOwner(session.user);
+
+  // ownerOnly = tab vidí jen vlastník (citlivá nastavení)
+  const allTabs: {
+    href: string;
+    label: string;
+    icon: string;
+    ownerOnly: boolean;
+  }[] = [
+    { href: "/dashboard/settings", label: "Firma", icon: "🏢", ownerOnly: true },
+    { href: "/dashboard/settings/notifications", label: "Notifikace", icon: "🔔", ownerOnly: false },
+    { href: "/dashboard/settings/team", label: "Tým", icon: "👥", ownerOnly: true },
+    { href: "/dashboard/settings/hours", label: "Pracovní doba", icon: "🕐", ownerOnly: false },
+    { href: "/dashboard/settings/services", label: "Typy schůzek", icon: "🛍", ownerOnly: false },
+    { href: "/dashboard/settings/integrations", label: "Integrace", icon: "🔌", ownerOnly: true },
+    { href: "/dashboard/settings/account", label: "Účet", icon: "🔑", ownerOnly: false },
   ];
+  const tabs = allTabs.filter((t) => owner || !t.ownerOnly);
 
   return (
     <div className="space-y-6">

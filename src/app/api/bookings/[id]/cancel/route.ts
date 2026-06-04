@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { deleteCalendarEvent } from "@/lib/google-calendar";
+import { canManage } from "@/lib/perms";
 
 export async function POST(
   _req: NextRequest,
@@ -21,9 +22,10 @@ export async function POST(
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
 
-  const role = session.user.role;
+  // Owner i manažer (staff bez providerId) smí rušit vše;
+  // staff vázaný na providera jen své rezervace.
   const providerId = session.user.providerId;
-  if (role !== "owner" && booking.providerId !== providerId) {
+  if (!canManage(session.user) && booking.providerId !== providerId) {
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
 

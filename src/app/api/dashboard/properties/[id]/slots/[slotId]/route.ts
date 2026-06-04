@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { canManage } from "@/lib/perms";
 
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string; slotId: string } },
 ) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId || session.user.role !== "owner") {
+  if (!session?.user?.tenantId || !canManage(session.user)) {
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
   const tenantId = session.user.tenantId;

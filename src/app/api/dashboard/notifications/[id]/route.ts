@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { canManage } from "@/lib/perms";
 
 const schema = z.object({
   name: z.string().min(1).max(120),
@@ -21,7 +22,7 @@ export async function PATCH(
   { params }: { params: { id: string } },
 ) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId || session.user.role !== "owner") {
+  if (!session?.user?.tenantId || !canManage(session.user)) {
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
   const tenantId = session.user.tenantId;
@@ -64,7 +65,7 @@ export async function DELETE(
   { params }: { params: { id: string } },
 ) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId || session.user.role !== "owner") {
+  if (!session?.user?.tenantId || !canManage(session.user)) {
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
   const own = await prisma.notificationRule.findFirst({

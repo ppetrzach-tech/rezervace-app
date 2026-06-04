@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendTemplatedEmail, escapeHtml } from "@/lib/email";
 import { sendSmsRaw } from "@/lib/sms";
+import { canManage } from "@/lib/perms";
 
 const schema = z.object({
   to: z.string().email().optional(),
@@ -48,7 +49,7 @@ export async function POST(
   { params }: { params: { id: string } },
 ) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.tenantId || session.user.role !== "owner") {
+  if (!session?.user?.tenantId || !canManage(session.user)) {
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
   const tenant = await prisma.tenant.findUnique({
