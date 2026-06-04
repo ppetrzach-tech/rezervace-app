@@ -18,7 +18,7 @@ export function ActiveToggle({
     if (
       next === false &&
       !confirm(
-        "Deaktivovat nemovitost?\n\nKlienti ji už neuvidí ani si nezarezervují termín. Přesune se do sekce „Neaktivní". Kdykoliv ji můžete znovu aktivovat.",
+        "Deaktivovat nemovitost?\n\nKlienti ji uz neuvidi ani si nezarezervuji termin. Presune se do sekce 'Neaktivni'. Kdykoliv ji muzete znovu aktivovat.",
       )
     ) {
       return;
