@@ -1,7 +1,6 @@
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
 import { escapeHtml } from "./email";
 import { sendEmail, type SendEmailResult } from "./email-provider";
+import { czDateTimeLong } from "./datetime";
 
 type OwnerBookingData = {
   ownerEmail: string;
@@ -33,7 +32,7 @@ export async function sendOwnerNewBookingEmail(
     return { ok: false, error: "ownerEmail chybí" };
   }
 
-  const dateStr = format(data.startsAt, "EEEE d. M. yyyy 'v' HH:mm", { locale: cs });
+  const dateStr = czDateTimeLong(data.startsAt);
 
   const answersRows = (data.customAnswers ?? [])
     .filter((a) => a.value)

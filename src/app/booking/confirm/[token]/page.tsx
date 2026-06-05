@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
+import { czDateTimeLong } from "@/lib/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +50,7 @@ export default async function ConfirmBookingPage({
     });
   }
 
-  const dateStr = format(booking.startsAt, "EEEE d. M. yyyy 'v' HH:mm", { locale: cs });
+  const dateStr = czDateTimeLong(booking.startsAt);
   const title = booking.listing?.title || booking.service.name;
 
   return (

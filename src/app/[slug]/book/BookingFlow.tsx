@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { addDays, format, startOfDay } from "date-fns";
-import { cs } from "date-fns/locale";
+import { czDateTimeLong, czTime } from "@/lib/datetime";
 
 type Provider = { id: string; name: string; bio: string | null };
 type Service = {
@@ -222,8 +222,8 @@ export function BookingFlow({
                       : "bg-white border-slate-200 hover:border-brand-500"
                   }`}
                 >
-                  <div className="text-xs">{format(d, "EEE", { locale: cs })}</div>
-                  <div className="font-semibold">{format(d, "d. M.")}</div>
+                  <div className="text-xs">{d.toLocaleDateString("cs-CZ", { timeZone: "Europe/Prague", weekday: "short" })}</div>
+                  <div className="font-semibold">{d.toLocaleDateString("cs-CZ", { timeZone: "Europe/Prague", day: "numeric", month: "numeric" })}</div>
                 </button>
               );
             })}
@@ -245,7 +245,7 @@ export function BookingFlow({
                   }}
                   className="px-3 py-2 rounded-lg border border-slate-200 hover:border-brand-500 hover:bg-brand-50 text-sm font-medium"
                 >
-                  {format(new Date(slot.start), "HH:mm")}
+                  {czTime(new Date(slot.start))}
                 </button>
               ))}
             </div>
@@ -266,9 +266,7 @@ export function BookingFlow({
             </div>
             <div>
               📅{" "}
-              {format(new Date(selectedSlot.start), "EEEE d. M. yyyy 'v' HH:mm", {
-                locale: cs,
-              })}
+              {czDateTimeLong(new Date(selectedSlot.start))}
             </div>
             <div>
               {locationEmoji(service.locationType)} {locationLabel(service.locationType)}
@@ -350,9 +348,7 @@ export function BookingFlow({
               <strong>{service.name}</strong> · {provider.name}
             </div>
             <div>
-              {format(new Date(selectedSlot.start), "EEEE d. M. yyyy 'v' HH:mm", {
-                locale: cs,
-              })}
+              {czDateTimeLong(new Date(selectedSlot.start))}
             </div>
             <div className="text-sm">
               {locationEmoji(service.locationType)} {locationLabel(service.locationType)}

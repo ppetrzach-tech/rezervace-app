@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { format, startOfDay, addDays } from "date-fns";
-import { cs } from "date-fns/locale";
+import { startOfDay, addDays } from "date-fns";
+import { czTime, czWeekdayDayMonth } from "@/lib/datetime";
 import { CancelButton } from "../CancelButton";
 
 export const dynamic = "force-dynamic";
@@ -106,10 +106,10 @@ export default async function BookingsPage({
                 <tr key={b.id} className="border-t border-slate-100">
                   <td className="p-3">
                     <div className="font-medium">
-                      {format(b.startsAt, "EEE d. M.", { locale: cs })}
+                      {czWeekdayDayMonth(b.startsAt)}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {format(b.startsAt, "HH:mm")} ·{" "}
+                      {czTime(b.startsAt)} ·{" "}
                       {b.service.durationMinutes} min
                     </div>
                   </td>

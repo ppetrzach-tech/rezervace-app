@@ -3,8 +3,7 @@ import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
+import { czDateTimeLong, czDayMonthTime } from "@/lib/datetime";
 import { CancelButton } from "../../CancelButton";
 
 export const dynamic = "force-dynamic";
@@ -64,7 +63,7 @@ export default async function BookingDetailPage({
           {booking.listing?.title || booking.service.name}
         </h1>
         <p className="text-slate-600 mt-1">
-          {format(booking.startsAt, "EEEE d. M. yyyy 'v' HH:mm", { locale: cs })}
+          {czDateTimeLong(booking.startsAt)}
           {" · "}
           {booking.service.durationMinutes} min
         </p>
@@ -76,7 +75,7 @@ export default async function BookingDetailPage({
           ) : booking.confirmedByClientAt ? (
             <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
               ✓ potvrzeno klientem{" "}
-              {format(booking.confirmedByClientAt, "d. M. HH:mm", { locale: cs })}
+              {czDayMonthTime(booking.confirmedByClientAt)}
             </span>
           ) : (
             <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-500">
@@ -136,7 +135,7 @@ export default async function BookingDetailPage({
             <div className="flex justify-between gap-2">
               <dt className="text-slate-500">Vytvořeno</dt>
               <dd className="text-right">
-                {format(booking.createdAt, "d. M. yyyy HH:mm", { locale: cs })}
+                {czDateTimeLong(booking.createdAt)}
               </dd>
             </div>
           </dl>
@@ -191,7 +190,7 @@ export default async function BookingDetailPage({
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm">{ruleName(n.ruleId)}</div>
                   <div className="text-xs text-slate-500">
-                    {format(n.sentAt, "d. M. yyyy 'v' HH:mm", { locale: cs })}
+                    {czDateTimeLong(n.sentAt)}
                     {" · "}
                     {n.channel === "email" ? "Email" : "SMS"}
                   </div>

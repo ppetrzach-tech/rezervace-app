@@ -1,5 +1,4 @@
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
+import { czDayMonthTime } from "./datetime";
 
 // GoSMS REST API: https://doc.gosms.cz
 // Tok: 1) POST /oauth/v2/token (client_credentials) → access_token
@@ -96,13 +95,13 @@ type BookingSmsData = {
 export async function sendBookingConfirmationSms(
   data: BookingSmsData,
 ): Promise<SmsResult> {
-  const when = format(data.startsAt, "d. M. yyyy HH:mm", { locale: cs });
+  const when = czDayMonthTime(data.startsAt);
   const message = `Potvrzeni rezervace: ${data.serviceName} u ${data.providerName} dne ${when}. Diky!`;
   return sendSms(data.clientPhone, message);
 }
 
 export async function sendReminderSms(data: BookingSmsData): Promise<SmsResult> {
-  const when = format(data.startsAt, "d. M. yyyy HH:mm", { locale: cs });
+  const when = czDayMonthTime(data.startsAt);
   const message = `Pripominka: zitra ${when} mate rezervaci ${data.serviceName} u ${data.providerName}. Tesime se!`;
   return sendSms(data.clientPhone, message);
 }

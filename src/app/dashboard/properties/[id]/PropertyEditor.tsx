@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { format, addMinutes } from "date-fns";
-import { cs } from "date-fns/locale";
+import { addMinutes } from "date-fns";
+import { czDateTimeLong, czDayMonthTime } from "@/lib/datetime";
 import { CopyButton } from "../../CopyButton";
 import { ShareButton } from "../../ShareModal";
 import { DuplicateButton } from "../DuplicateButton";
@@ -193,7 +193,7 @@ export function PropertyEditor({
       ].sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
     }));
     setNewSlotTime("");
-    setMsg({ ok: true, text: `Slot přidán: ${format(startsAt, "d. M. HH:mm", { locale: cs })}` });
+    setMsg({ ok: true, text: `Slot přidán: ${czDayMonthTime(startsAt)}` });
     setTimeout(() => setMsg(null), 2000);
     router.refresh();
   }
@@ -621,7 +621,7 @@ export function PropertyEditor({
                     >
                       <div>
                         <div className="font-medium">
-                          {format(date, "EEEE d. M. yyyy 'v' HH:mm", { locale: cs })}
+                          {czDateTimeLong(date)}
                         </div>
                         {s.bookedBy ? (
                           <div className="text-xs text-brand-700">

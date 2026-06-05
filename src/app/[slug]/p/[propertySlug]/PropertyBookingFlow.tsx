@@ -13,10 +13,8 @@ import {
   isBefore,
   startOfDay,
 } from "date-fns";
-import { cs, enUS, sk } from "date-fns/locale";
+import { czDateTimeLong, czTime, czWeekdayDayMonth } from "@/lib/datetime";
 import { t as createT, type Locale as AppLocale } from "@/lib/i18n";
-
-const DATE_FNS_LOCALE = { cs, en: enUS, sk } as const;
 
 type FormQuestion = {
   id: string;
@@ -52,7 +50,6 @@ export function PropertyBookingFlow({
   slots: Slot[];
 }) {
   const tr = createT(locale);
-  const dfLocale = DATE_FNS_LOCALE[locale] ?? cs;
   const [step, setStep] = useState<Step>("date");
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(
@@ -162,9 +159,7 @@ export function PropertyBookingFlow({
             <div className="font-semibold text-lg">{listing.title}</div>
             <div className="text-slate-600 mt-1">
               📅{" "}
-              {format(new Date(selectedSlot.startsAt), "EEEE d. M. yyyy 'v' HH:mm", {
-                locale: dfLocale,
-              })}
+              {czDateTimeLong(new Date(selectedSlot.startsAt))}
             </div>
             {listing.address && (
               <div className="text-slate-600 mt-1">📍 {listing.address}</div>
@@ -242,7 +237,7 @@ export function PropertyBookingFlow({
                 ←
               </button>
               <h3 className="font-semibold capitalize">
-                {format(currentMonth, "LLLL yyyy", { locale: dfLocale })}
+                {currentMonth.toLocaleDateString("cs-CZ", { timeZone: "Europe/Prague", month: "long", year: "numeric" })}
               </h3>
               <button
                 type="button"
@@ -317,7 +312,7 @@ export function PropertyBookingFlow({
                 <div className="text-sm font-medium text-slate-700 mb-3">
                   {tr("calendar.free_times")}:{" "}
                   <span className="text-slate-500 font-normal">
-                    {format(selectedDay, "EEEE d. M.", { locale: dfLocale })}
+                    {czWeekdayDayMonth(selectedDay)}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -340,7 +335,7 @@ export function PropertyBookingFlow({
                           }
                         `}
                       >
-                        {format(new Date(slot.startsAt), "HH:mm")}
+                        {czTime(new Date(slot.startsAt))}
                       </button>
                     );
                   })}
@@ -364,11 +359,7 @@ export function PropertyBookingFlow({
                     {tr("form.selected_term")}
                   </div>
                   <div className="font-semibold">
-                    {format(
-                      new Date(selectedSlot.startsAt),
-                      "EEEE d. M. yyyy 'v' HH:mm",
-                      { locale: dfLocale },
-                    )}
+                    {czDateTimeLong(new Date(selectedSlot.startsAt))}
                   </div>
                 </div>
               </div>

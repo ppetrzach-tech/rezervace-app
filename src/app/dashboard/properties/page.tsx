@@ -3,8 +3,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
+import { czDayMonthTime } from "@/lib/datetime";
 import { CopyButton } from "../CopyButton";
 import { ShareButton } from "../ShareModal";
 import { DuplicateButton } from "./DuplicateButton";
@@ -116,7 +115,7 @@ function PropertyCard({
           </span>
           {nextSlot ? (
             <span className="bg-green-50 text-green-700 px-2 py-1 rounded-full">
-              ✓ {format(nextSlot.startsAt, "d. M. HH:mm", { locale: cs })}
+              ✓ {czDayMonthTime(nextSlot.startsAt)}
             </span>
           ) : (
             <span className="bg-orange-50 text-orange-700 px-2 py-1 rounded-full">

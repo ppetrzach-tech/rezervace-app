@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { addDays, format, startOfDay, subDays } from "date-fns";
-import { cs } from "date-fns/locale";
+import { addDays, startOfDay, subDays } from "date-fns";
+import { czDateTimeLong, czTime, czDayMonthTime } from "@/lib/datetime";
 import { CopyButton } from "./CopyButton";
 import { DonutChart, Sparkline, ProgressBar } from "./DashboardWidgets";
 
@@ -206,7 +206,7 @@ export default async function DashboardHome() {
                   <li key={b.id} className="px-5 py-3 flex gap-4 items-center hover:bg-slate-50">
                     <div className="text-center min-w-[60px]">
                       <div className="font-semibold text-lg leading-tight">
-                        {format(b.startsAt, "HH:mm")}
+                        {czTime(b.startsAt)}
                       </div>
                       <div className="text-xs text-slate-400">
                         {b.service.durationMinutes} min
@@ -264,7 +264,7 @@ export default async function DashboardHome() {
                       <div className="font-medium text-slate-600">
                         {sparklineData[i]}
                       </div>
-                      <div>{format(d, "EE", { locale: cs }).slice(0, 2)}</div>
+                      <div>{d.toLocaleDateString("cs-CZ", { timeZone: "Europe/Prague", weekday: "short" }).slice(0, 2)}</div>
                     </div>
                   );
                 })}
@@ -304,9 +304,9 @@ export default async function DashboardHome() {
                         ) : null}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {format(b.createdAt, "d. M. yyyy 'v' HH:mm", { locale: cs })}{" "}
+                        {czDateTimeLong(b.createdAt)}{" "}
                         · termín{" "}
-                        {format(b.startsAt, "d. M. HH:mm", { locale: cs })}
+                        {czDayMonthTime(b.startsAt)}
                       </div>
                     </div>
                   </li>

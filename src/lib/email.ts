@@ -1,7 +1,6 @@
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
 import { branding, locationEmoji, locationLabel } from "./branding";
 import { sendEmail, type SendEmailResult } from "./email-provider";
+import { czDateTimeLong } from "./datetime";
 
 type BookingEmailData = {
   clientName: string;
@@ -22,7 +21,7 @@ type BookingEmailData = {
 };
 
 function formatDateCs(date: Date): string {
-  return format(date, "EEEE d. MMMM yyyy 'v' HH:mm", { locale: cs });
+  return czDateTimeLong(date);
 }
 
 function icsAttachment(ics?: string) {
