@@ -4,7 +4,7 @@ import { sendTemplatedEmail } from "./email";
 import { generateIcs } from "./ics";
 import { locationLabel } from "./branding";
 import { czDate, czTime } from "./datetime";
-import { vocativeFirstName, formalGreeting } from "./czech-name";
+import { vocativeFirstName, formalGreeting, firstName } from "./czech-name";
 import { markdownishToHtml } from "./email-format";
 
 type Vars = Record<string, string>;
@@ -15,13 +15,6 @@ function applyTemplate(text: string, vars: Vars): string {
 
 const plaintextToHtml = markdownishToHtml;
 
-
-/**
- * Vrátí jen křestní jméno (první slovo z full name).
- */
-function firstName(full: string): string {
-  return full.split(" ")[0] || full;
-}
 
 /**
  * Spuštění notifikačního engine — projde všechna pravidla,

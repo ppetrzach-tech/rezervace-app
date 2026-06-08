@@ -6,9 +6,43 @@
  * jistí, vrátíme jméno beze změny (raději bez chyby).
  */
 
+// Akademické a profesní tituly (před i za jménem) — normalizováno (bez teček, lowercase).
+const TITLES = new Set([
+  "bc", "bca", "ing", "mudr", "mddr", "mvdr", "judr", "phdr", "rndr",
+  "pharmdr", "thlic", "thdr", "mgr", "mga", "paeddr", "dr", "prof",
+  "doc", "phd", "csc", "drsc", "dis", "mba", "llm", "dipl", "arch",
+]);
+
+function normToken(t: string): string {
+  return t.replace(/[.,]/g, "").toLowerCase();
+}
+
+/**
+ * Odstraní akademické/profesní tituly před i za jménem.
+ * "Mgr. Jan Novák" → "Jan Novák", "Jan Novák, Ph.D." → "Jan Novák".
+ */
+export function stripTitles(fullName: string): string {
+  let tokens = fullName.trim().split(/\s+/).filter(Boolean);
+  // tituly na začátku
+  while (tokens.length > 1 && TITLES.has(normToken(tokens[0]))) tokens.shift();
+  // tituly na konci
+  while (
+    tokens.length > 1 &&
+    TITLES.has(normToken(tokens[tokens.length - 1]))
+  )
+    tokens.pop();
+  return tokens.join(" ").replace(/[,\s]+$/, "").trim();
+}
+
+/** Křestní jméno (první slovo po odstranění titulů). */
+export function firstName(fullName: string): string {
+  const clean = stripTitles(fullName);
+  return clean.split(/\s+/)[0] || clean;
+}
+
 /** Detekce ženského jména/příjmení (česká příjmení -ová/-á jsou spolehlivá). */
 export function isFemaleName(fullName: string): boolean {
-  const parts = fullName.trim().split(/\s+/);
+  const parts = stripTitles(fullName).split(/\s+/);
   const first = (parts[0] || "").toLowerCase();
   const last = (parts[parts.length - 1] || "").toLowerCase();
 
@@ -30,7 +64,7 @@ export function isFemaleName(fullName: string): boolean {
  * Heuristika; při nejistotě vrací beze změny.
  */
 export function vocativeFirstName(fullName: string): string {
-  const first = (fullName.trim().split(/\s+/)[0] || "").trim();
+  const first = firstName(fullName).trim();
   if (!first) return "";
   const lower = first.toLowerCase();
   const female = isFemaleName(fullName);
