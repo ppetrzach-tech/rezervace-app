@@ -24,64 +24,62 @@ export async function GET(req: NextRequest) {
   await prisma.notificationRule.deleteMany({ where: { tenantId: tenant.id } });
 
   // 1) 24h před prohlídkou — potvrzení s odkazy na složku a inzerát
-  const before24 = `Dobrý den {{client_first_name}},
+  const before24 = `{{client_greeting}},
 
-tímto potvrzuji prohlídku bytu **{{service_name}}** zítra v {{time}} na adrese **{{location}}**.
+tímto potvrzuji prohlídku **{{service_name}}** zítra v {{time}} na adrese **{{location}}**.
 
-Prosím také o potvrzení prohlídky tlačítkem níže.
+Prosím Vás také o potvrzení prohlídky tlačítkem níže.
 
-Prohlídka bude probíhat 20–30 min, aby byl dostatek času se s bytem seznámit.
+Prohlídka bude probíhat 20–30 min, abyste měli dostatek času se s nemovitostí seznámit.
 
-Pod tímto odkazem najdete kompletní fotodokumentaci, která se do inzerce nevešla, videoprohlídku nemovitosti, půdorysy, mapy a dokumenty ke stažení (LV, Výše záloh): [📂 Otevřít složku s dokumenty]({{documents_url}})
+Pod tímto odkazem najdete kompletní fotodokumentaci, která se do inzerce nevešla, videoprohlídku nemovitosti, půdorysy, mapy a dokumenty ke stažení (LV, výše záloh): [📂 Otevřít složku s dokumenty]({{documents_url}})
 
 Inzerát na webu: [🌐 Zobrazit nabídku]({{property_web_url}})
 
-Když vás bude cokoliv zajímat, klidně mi napište nebo zavolejte.
+Pokud Vás bude cokoliv zajímat, klidně mi napište nebo zavolejte.
 
-Hezký den.
+Přeji hezký den.
 
 S pozdravem
 {{provider_name}}
-Tel.: {{provider_phone}}`;
+Tel.: {{business_phone}}`;
 
   // 2) +10 min po prohlídce — krátké poděkování
-  const after10 = `Dobrý den {{client_first_name}},
+  const after10 = `{{client_greeting}},
 
-děkuji Vám za prohlídku bytu **{{service_name}}** ve **{{location}}**.
+děkuji Vám za prohlídku **{{service_name}}** na adrese **{{location}}**.
 
-Pokud budete mít jakékoli otázky nebo zpětnou vazbu, tak mi napište nebo zavolejte.
+Pokud budete mít jakékoli dotazy nebo zpětnou vazbu, napište mi prosím nebo zavolejte.
 
-Děkuji,
+Děkuji a přeji hezký den,
 {{provider_name}}
-Tel.: {{provider_phone}}`;
+Tel.: {{business_phone}}`;
 
   // 3) +24h po prohlídce — odkaz na nabídkový formulář
-  const after24 = `Dobrý den {{client_first_name}},
+  const after24 = `{{client_greeting}},
 
-ještě jednou Vám děkuji za prohlídku bytu **{{service_name}}** ve **{{location}}**.
+ještě jednou Vám děkuji za prohlídku **{{service_name}}** na adrese **{{location}}**.
 
-Pokud budete mít zájem o tuto nemovitost, můžete na následujícím odkazu odeslat svou nabídku:
+Pokud byste měli o tuto nemovitost zájem, můžete na následujícím odkazu odeslat svou nabídku:
 
 [📝 Otevřít nabídkový formulář]({{offer_form_url}})
 
-Přeji pěkný den,
+Přeji Vám pěkný den,
 {{provider_name}}
-Tel.: {{provider_phone}}`;
+Tel.: {{business_phone}}`;
 
   // 4) +48h po prohlídce — připomenutí + virtuální prohlídka
-  const after48 = `Dobrý den {{client_first_name}},
+  const after48 = `{{client_greeting}},
 
-včera jsem Vám zasílal e-mail s nabídkovým formulářem. Pokud máte zájem si byt prohlédnout ještě jednou, tak mi napište.
+předevčírem jsem Vám zasílal e-mail s nabídkovým formulářem. Pokud byste si chtěli nemovitost prohlédnout ještě jednou, napište mi prosím.
 
-Můžete také využít naši virtuální prohlídku na následujícím odkazu, kde si dům projdete znovu odkudkoliv:
+Můžete také využít naši virtuální prohlídku na následujícím odkazu, kde si nemovitost projdete znovu odkudkoliv:
 
 - [🎥 Otevřít virtuální prohlídku]({{virtual_tour_url}})
 
-Děkuji moc.
-
-Přeji pěkný den,
+Děkuji a přeji pěkný den,
 {{provider_name}}
-Tel.: {{provider_phone}}`;
+Tel.: {{business_phone}}`;
 
   const rules = [
     {

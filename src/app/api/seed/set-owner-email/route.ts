@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Chybí platný ?email=" }, { status: 400 });
   }
   const replyTo = searchParams.get("replyTo") || email;
+  const phone = searchParams.get("phone");
 
   const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
   if (!tenant) {
@@ -31,7 +32,11 @@ export async function GET(req: NextRequest) {
 
   await prisma.tenant.update({
     where: { id: tenant.id },
-    data: { ownerEmail: email, replyToEmail: replyTo },
+    data: {
+      ownerEmail: email,
+      replyToEmail: replyTo,
+      ...(phone ? { ownerPhone: phone } : {}),
+    },
   });
 
   return NextResponse.json({
@@ -39,5 +44,6 @@ export async function GET(req: NextRequest) {
     tenant: tenant.slug,
     ownerEmail: email,
     replyToEmail: replyTo,
+    ownerPhone: phone ?? tenant.ownerPhone,
   });
 }

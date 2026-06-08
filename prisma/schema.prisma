@@ -22,6 +22,9 @@ model Tenant {
   // Email vlastníka pro notifikace o nových rezervacích (může být jiný než login email)
   ownerEmail   String?
 
+  // Telefon do podpisu emailů — proměnná {{business_phone}}
+  ownerPhone   String?
+
   // Reply-To adresa — kam chodí odpovědi klientů na automatické emaily.
   // Když je prázdné, použije se ownerEmail. Když i ten chybí, odpovědi jdou na From adresu.
   replyToEmail String?

@@ -30,6 +30,7 @@ export default async function SettingsPage() {
           name: tenant.name,
           tagline: tenant.tagline ?? "",
           primaryColor: tenant.primaryColor,
+          ownerPhone: tenant.ownerPhone ?? "",
         }}
       />
     </div>

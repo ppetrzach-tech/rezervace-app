@@ -184,10 +184,16 @@ export function NotificationsManager({
       <div className="card bg-brand-50 border-brand-200">
         <h3 className="font-semibold mb-2">Dostupné proměnné</h3>
         <p className="text-sm text-slate-700 mb-2">
-          V předmětu a textu můžete použít:
+          V předmětu a textu můžete použít (vždy vykání):
         </p>
-        <code className="text-xs">
-          {`{{client_name}} · {{service_name}} · {{provider_name}} · {{date}} · {{time}} · {{location}} · {{confirm_url}} · {{business_name}}`}
+        <code className="text-xs block leading-relaxed">
+          {`{{client_greeting}} = „Dobrý den, Petře" (oslovení se skloňováním) · {{client_vocative}} = „Petře" · {{client_name}} · {{client_first_name}}`}
+          <br />
+          {`{{service_name}} · {{date}} · {{time}} · {{location}} · {{confirm_url}}`}
+          <br />
+          {`{{provider_name}} · {{business_phone}} (telefon z Nastavení → Firma) · {{business_name}}`}
+          <br />
+          {`{{documents_url}} · {{virtual_tour_url}} · {{property_web_url}} · {{offer_form_url}}`}
         </code>
       </div>
 

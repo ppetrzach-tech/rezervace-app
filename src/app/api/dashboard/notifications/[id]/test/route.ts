@@ -82,15 +82,19 @@ export async function POST(
 
   // Ukázková data (dummy)
   const baseUrl = process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+  const phone = tenant.ownerPhone || "724 191 620";
   const vars: Vars = {
     client_name: "Marie Nováková",
     client_first_name: "Marie",
+    client_vocative: "Marie",
+    client_greeting: "Dobrý den, Marie",
     client_email: "marie.novakova@example.com",
     client_phone: "+420 777 123 456",
     service_name: "Byt 3+kk, Praha 7 — Letná",
     provider_name: session.user.name ?? "Petr Zach",
-    provider_phone: "724 191 620",
+    provider_phone: phone,
     provider_email: recipient,
+    business_phone: phone,
     date: "15. 6. 2026",
     time: "14:30",
     location: "Strojnická 12, Praha 7",

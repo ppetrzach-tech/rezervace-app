@@ -8,6 +8,7 @@ type Settings = {
   name: string;
   tagline: string;
   primaryColor: string;
+  ownerPhone: string;
 };
 
 const COLOR_PRESETS = [
@@ -69,6 +70,19 @@ export function SettingsForm({ initial }: { initial: Settings }) {
           value={data.tagline}
           onChange={(e) => setData({ ...data, tagline: e.target.value })}
         />
+      </div>
+      <div>
+        <label className="label">📞 Telefon do emailů</label>
+        <input
+          className="input"
+          placeholder="724 191 620"
+          value={data.ownerPhone}
+          onChange={(e) => setData({ ...data, ownerPhone: e.target.value })}
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          Dosadí se do emailů přes proměnnou <code>{"{{business_phone}}"}</code>.
+          Změníte ho kdykoliv.
+        </p>
       </div>
       <div>
         <label className="label">URL stránky *</label>
