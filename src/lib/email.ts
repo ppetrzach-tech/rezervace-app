@@ -1,6 +1,7 @@
 import { branding, locationEmoji, locationLabel } from "./branding";
 import { sendEmail, type SendEmailResult } from "./email-provider";
 import { czDateTimeLong } from "./datetime";
+import { formalGreeting } from "./czech-name";
 
 type BookingEmailData = {
   clientName: string;
@@ -42,7 +43,7 @@ export async function sendBookingConfirmationEmail(
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
       <div style="color: #6b7280; font-size: 13px;">${escapeHtml(data.businessName || branding.businessName)}</div>
       <h2 style="color: #1d4ed8; margin-top: 4px;">Vaše rezervace je potvrzena</h2>
-      <p>Dobrý den ${escapeHtml(data.clientName)},</p>
+      <p>${escapeHtml(formalGreeting(data.clientName))},</p>
       <p>děkujeme za rezervaci. Tady jsou detaily:</p>
       <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
         <tr><td style="padding: 8px 0; color: #6b7280;">Schůzka:</td><td><strong>${escapeHtml(data.serviceName)}</strong></td></tr>
@@ -76,7 +77,7 @@ export async function sendReminderEmail(
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
       <div style="color: #6b7280; font-size: 13px;">${escapeHtml(data.businessName || branding.businessName)}</div>
       <h2 style="color: #1d4ed8;">Připomínáme vaši rezervaci</h2>
-      <p>Dobrý den ${escapeHtml(data.clientName)},</p>
+      <p>${escapeHtml(formalGreeting(data.clientName))},</p>
       <p>jen krátká připomínka, že zítra máte rezervovaný termín:</p>
       <p><strong>${escapeHtml(data.serviceName)}</strong> u ${escapeHtml(data.providerName)}<br/>
       <strong>${dateStr}</strong></p>
