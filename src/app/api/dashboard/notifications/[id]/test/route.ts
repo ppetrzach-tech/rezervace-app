@@ -3,7 +3,8 @@ import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { sendTemplatedEmail, escapeHtml } from "@/lib/email";
+import { sendTemplatedEmail } from "@/lib/email";
+import { markdownishToHtml } from "@/lib/email-format";
 import { sendSmsRaw } from "@/lib/sms";
 import { canManage } from "@/lib/perms";
 
@@ -17,32 +18,7 @@ function applyTemplate(text: string, vars: Vars): string {
   return text.replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_, key) => vars[key] ?? "");
 }
 
-function plaintextToHtml(s: string): string {
-  let cleaned = s
-    .split("\n")
-    .filter((line) => !/\[[^\]]*\]\(\s*\)/.test(line))
-    .join("\n");
-  cleaned = cleaned.replace(/\[[^\]]*\]\(\s*\)/g, "");
-  const links: string[] = [];
-  let work = cleaned;
-  work = work.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_, text, url) => {
-    const i = links.length;
-    links.push(
-      `<a href="${url}" style="color:#2563eb; text-decoration: underline;">${escapeHtml(text)}</a>`,
-    );
-    return ` ${i} `;
-  });
-  work = work.replace(/(https?:\/\/[^\s<]+)/g, (url) => {
-    const i = links.length;
-    links.push(
-      `<a href="${url}" style="color:#2563eb; text-decoration: underline;">${escapeHtml(url)}</a>`,
-    );
-    return ` ${i} `;
-  });
-  let out = escapeHtml(work);
-  out = out.replace(/ (\d+) /g, (_, i) => links[parseInt(i, 10)]);
-  return out.replace(/\n/g, "<br/>");
-}
+const plaintextToHtml = markdownishToHtml;
 
 export async function POST(
   req: NextRequest,
