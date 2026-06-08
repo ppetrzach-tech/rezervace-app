@@ -87,77 +87,155 @@ export default async function BookingsPage({
       {bookings.length === 0 ? (
         <div className="card text-center text-slate-500">Žádné rezervace.</div>
       ) : (
-        <div className="card p-0 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="text-left p-3">Termín</th>
-                <th className="text-left p-3">Klient</th>
-                <th className="text-left p-3">Schůzka</th>
-                <th className="text-left p-3">Stav</th>
-                {isOwner && (
-                  <th className="text-left p-3">Osoba</th>
-                )}
-                <th className="p-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookings.map((b) => (
-                <tr key={b.id} className="border-t border-slate-100">
-                  <td className="p-3">
-                    <div className="font-medium">
-                      {czWeekdayDayMonth(b.startsAt)}
+        <>
+          {/* MOBIL — karty */}
+          <div className="space-y-3 sm:hidden">
+            {bookings.map((b) => (
+              <div key={b.id} className="card p-4">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold">
+                      {czWeekdayDayMonth(b.startsAt)} · {czTime(b.startsAt)}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {czTime(b.startsAt)} ·{" "}
                       {b.service.durationMinutes} min
                     </div>
-                  </td>
-                  <td className="p-3">
-                    <div className="font-medium">{b.client.name}</div>
-                    <div className="text-xs text-slate-500">{b.client.phone}</div>
-                    <div className="text-xs text-slate-500">{b.client.email}</div>
-                  </td>
-                  <td className="p-3">
-                    <div>{b.listing?.title || b.service.name}</div>
-                    {b.listing?.address && (
-                      <div className="text-xs text-slate-500">{b.listing.address}</div>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    {b.status === "cancelled" ? (
-                      <span className="text-xs px-2 py-1 rounded-full bg-red-50 text-red-700">
-                        zrušeno
-                      </span>
-                    ) : b.confirmedByClientAt ? (
-                      <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
-                        ✓ potvrzeno klientem
-                      </span>
-                    ) : (
-                      <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-500">
-                        čeká
-                      </span>
-                    )}
-                  </td>
-                  {isOwner && (
-                    <td className="p-3">{b.provider.name}</td>
+                  </div>
+                  <StatusBadge
+                    status={b.status}
+                    confirmed={!!b.confirmedByClientAt}
+                  />
+                </div>
+
+                <div className="mt-3">
+                  <div className="font-medium">
+                    {b.listing?.title || b.service.name}
+                  </div>
+                  {b.listing?.address && (
+                    <div className="text-xs text-slate-500">{b.listing.address}</div>
                   )}
-                  <td className="p-3 text-right whitespace-nowrap">
-                    <Link
-                      href={`/dashboard/bookings/${b.id}`}
-                      className="text-sm text-brand-700 hover:underline mr-3"
-                    >
-                      Detail
-                    </Link>
-                    {b.status !== "cancelled" && <CancelButton bookingId={b.id} />}
-                  </td>
+                </div>
+
+                <div className="mt-2 text-sm">
+                  <div>{b.client.name}</div>
+                  <div className="text-xs text-slate-500">
+                    <a href={`tel:${b.client.phone}`} className="text-brand-700">
+                      {b.client.phone}
+                    </a>{" "}
+                    ·{" "}
+                    <a href={`mailto:${b.client.email}`} className="text-brand-700">
+                      {b.client.email}
+                    </a>
+                  </div>
+                  {isOwner && (
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      Osoba: {b.provider.name}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3">
+                  <Link
+                    href={`/dashboard/bookings/${b.id}`}
+                    className="text-sm text-brand-700 font-medium"
+                  >
+                    Detail →
+                  </Link>
+                  {b.status !== "cancelled" && <CancelButton bookingId={b.id} />}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* DESKTOP — tabulka */}
+          <div className="card p-0 overflow-x-auto hidden sm:block">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead className="bg-slate-50 text-slate-600">
+                <tr>
+                  <th className="text-left p-3">Termín</th>
+                  <th className="text-left p-3">Klient</th>
+                  <th className="text-left p-3">Schůzka</th>
+                  <th className="text-left p-3">Stav</th>
+                  {isOwner && <th className="text-left p-3">Osoba</th>}
+                  <th className="p-3"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {bookings.map((b) => (
+                  <tr key={b.id} className="border-t border-slate-100">
+                    <td className="p-3">
+                      <div className="font-medium">
+                        {czWeekdayDayMonth(b.startsAt)}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {czTime(b.startsAt)} · {b.service.durationMinutes} min
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      <div className="font-medium">{b.client.name}</div>
+                      <div className="text-xs text-slate-500">{b.client.phone}</div>
+                      <div className="text-xs text-slate-500">{b.client.email}</div>
+                    </td>
+                    <td className="p-3">
+                      <div>{b.listing?.title || b.service.name}</div>
+                      {b.listing?.address && (
+                        <div className="text-xs text-slate-500">
+                          {b.listing.address}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <StatusBadge
+                        status={b.status}
+                        confirmed={!!b.confirmedByClientAt}
+                      />
+                    </td>
+                    {isOwner && <td className="p-3">{b.provider.name}</td>}
+                    <td className="p-3 text-right whitespace-nowrap">
+                      <Link
+                        href={`/dashboard/bookings/${b.id}`}
+                        className="text-sm text-brand-700 hover:underline mr-3"
+                      >
+                        Detail
+                      </Link>
+                      {b.status !== "cancelled" && <CancelButton bookingId={b.id} />}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
+  );
+}
+
+function StatusBadge({
+  status,
+  confirmed,
+}: {
+  status: string;
+  confirmed: boolean;
+}) {
+  if (status === "cancelled") {
+    return (
+      <span className="text-xs px-2 py-1 rounded-full bg-red-50 text-red-700 shrink-0">
+        zrušeno
+      </span>
+    );
+  }
+  if (confirmed) {
+    return (
+      <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 shrink-0">
+        ✓ potvrzeno
+      </span>
+    );
+  }
+  return (
+    <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-500 shrink-0">
+      čeká
+    </span>
   );
 }
 
