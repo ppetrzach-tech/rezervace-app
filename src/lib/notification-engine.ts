@@ -149,19 +149,26 @@ export async function processNotifications(): Promise<{
                 : undefined,
             });
           }
-          // Nenápadný odkaz na správu rezervace.
-          // PŘED prohlídkou (offset < 0): lze přeplánovat / zrušit / odmítnout.
-          // PO prohlídce (offset >= 0): termín už proběhl → nabízíme jen "nemám zájem".
+          // Nenápadný odkaz na správu rezervace — podle načasování pravidla:
+          //  • offset < 0            → PŘED prohlídkou: přeplánovat / zrušit / odmítnout
+          //  • 0 ≤ offset < 12 h     → děkovný email hned po prohlídce: BEZ patičky (jen poděkování)
+          //  • offset ≥ 12 h         → pozdější follow-up (+24/48 h, řeší se nabídka): jen "nemám zájem"
+          const POST_FOLLOWUP_MIN = 12 * 60; // 720 min
           if (manageUrl) {
-            const afterViewing = rule.offsetMinutes >= 0;
-            const footerInner = afterViewing
-              ? `Už <a href="${manageUrl}" style="color:#2563eb;">nemáte o nemovitost zájem</a>? Dejte mi prosím vědět.`
-              : `Potřebujete <a href="${manageUrl}" style="color:#2563eb;">přeplánovat nebo zrušit termín</a>? Nebo už <a href="${manageUrl}" style="color:#2563eb;">nemáte zájem</a>?`;
-            bodyHtml += `
-              <div style="margin: 20px 0 0; padding-top: 14px; border-top: 1px solid #e2e8f0; font-size: 13px; color: #64748b;">
-                ${footerInner}
-              </div>
-            `;
+            let footerInner: string | null = null;
+            if (rule.offsetMinutes < 0) {
+              footerInner = `Potřebujete <a href="${manageUrl}" style="color:#2563eb;">přeplánovat nebo zrušit termín</a>? Nebo už <a href="${manageUrl}" style="color:#2563eb;">nemáte zájem</a>?`;
+            } else if (rule.offsetMinutes >= POST_FOLLOWUP_MIN) {
+              footerInner = `Už <a href="${manageUrl}" style="color:#2563eb;">nemáte o nemovitost zájem</a>? Dejte mi prosím vědět.`;
+            }
+            // 0 ≤ offset < 12 h → děkovný email → žádná patička
+            if (footerInner) {
+              bodyHtml += `
+                <div style="margin: 20px 0 0; padding-top: 14px; border-top: 1px solid #e2e8f0; font-size: 13px; color: #64748b;">
+                  ${footerInner}
+                </div>
+              `;
+            }
           }
           const res = await sendTemplatedEmail({
             to: booking.client.email,
