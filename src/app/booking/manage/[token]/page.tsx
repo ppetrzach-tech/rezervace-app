@@ -10,6 +10,20 @@ export default async function ManageBookingPage({
 }: {
   params: { token: string };
 }) {
+  // Ukázkový odkaz z testovacího emailu
+  if (params.token === "UKAZKA-TOKEN") {
+    return (
+      <Shell color="2563eb">
+        <div className="text-4xl mb-3">🧪</div>
+        <h1 className="text-2xl font-bold mb-2">Testovací odkaz</h1>
+        <p className="text-slate-600">
+          Tohle byl testovací email s ukázkovými daty. U skutečné rezervace zde
+          klient může termín přeplánovat, zrušit nebo říct, že nemá zájem.
+        </p>
+      </Shell>
+    );
+  }
+
   const booking = await prisma.booking.findUnique({
     where: { confirmationToken: params.token },
     include: { service: true, provider: true, listing: true, tenant: true },

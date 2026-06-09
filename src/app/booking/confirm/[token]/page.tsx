@@ -8,6 +8,22 @@ export default async function ConfirmBookingPage({
 }: {
   params: { token: string };
 }) {
+  // Ukázkový odkaz z testovacího emailu
+  if (params.token === "UKAZKA-TOKEN") {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <div className="card max-w-md text-center">
+          <div className="text-4xl mb-3">🧪</div>
+          <h1 className="text-2xl font-bold mb-2">Testovací odkaz</h1>
+          <p className="text-slate-600">
+            Tohle byl testovací email s ukázkovými daty. U skutečné rezervace
+            toto tlačítko potvrdí termín a zapíše se to do systému.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   const booking = await prisma.booking.findUnique({
     where: { confirmationToken: params.token },
     include: { service: true, provider: true, listing: true, tenant: true },
