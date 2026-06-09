@@ -190,6 +190,8 @@ model Booking {
   // null | "confirmed" | "reschedule" | "cancelled" | "declined"
   clientResponse       String?
   clientResponseAt     DateTime?
+  // Důvod, který klient uvedl při přeplánování / zrušení / odmítnutí (povinné)
+  clientResponseReason String?
   // Vlastník/klient zastavil další automatické emaily (follow-upy se nepošlou)
   emailingStopped      Boolean   @default(false)
 

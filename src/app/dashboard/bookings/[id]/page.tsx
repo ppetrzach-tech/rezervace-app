@@ -153,6 +153,14 @@ export default async function BookingDetailPage({
                 </dd>
               </div>
             )}
+            {booking.clientResponseReason && (
+              <div className="pt-1">
+                <dt className="text-slate-500 mb-1">Důvod od klienta</dt>
+                <dd className="rounded-lg bg-amber-50 border border-amber-100 text-amber-900 px-3 py-2 text-sm">
+                  „{booking.clientResponseReason}"
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between gap-2">
               <dt className="text-slate-500">Automatické emaily</dt>
               <dd className="text-right font-medium">

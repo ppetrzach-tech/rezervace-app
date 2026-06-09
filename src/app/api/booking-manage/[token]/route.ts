@@ -10,6 +10,7 @@ import { czDateTimeLong } from "@/lib/datetime";
 
 const schema = z.object({
   action: z.enum(["reschedule", "cancel", "decline"]),
+  reason: z.string().trim().min(1).max(1000),
 });
 
 /**
@@ -32,9 +33,14 @@ export async function POST(
   }
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Neplatná akce" }, { status: 400 });
+    const tooShort = parsed.error.issues.some((i) => i.path[0] === "reason");
+    return NextResponse.json(
+      { error: tooShort ? "Uveďte prosím důvod." : "Neplatná akce" },
+      { status: 400 },
+    );
   }
   const action = parsed.data.action;
+  const reason = parsed.data.reason.trim();
 
   const booking = await prisma.booking.findUnique({
     where: { confirmationToken: params.token },
@@ -64,6 +70,7 @@ export async function POST(
     data: {
       clientResponse: action,
       clientResponseAt: new Date(),
+      clientResponseReason: reason,
       emailingStopped: true, // další automatické emaily se nepošlou
       ...(willCancel
         ? { status: "cancelled", eventSlotId: null } // uvolní slot pro další zájemce
@@ -148,6 +155,10 @@ ${booking.provider.name}${phone ? `\nTel.: ${phone}` : ""}`;
       html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:24px;">
         <div style="background:#fef3c7;color:#92400e;padding:12px 16px;border-radius:8px;font-weight:600;">
           ${actionLabel}
+        </div>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin:16px 0;">
+          <div style="color:#1e3a8a;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;">Důvod od klienta</div>
+          <div style="color:#1e293b;">${escapeHtml(reason)}</div>
         </div>
         <table style="width:100%;border-collapse:collapse;margin:16px 0;">
           <tr><td style="padding:6px 0;color:#6b7280;width:130px;">Nemovitost:</td><td><strong>${escapeHtml(serviceName)}</strong></td></tr>
