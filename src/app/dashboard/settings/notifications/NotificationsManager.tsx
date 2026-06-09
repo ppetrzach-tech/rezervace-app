@@ -194,6 +194,8 @@ export function NotificationsManager({
           {`{{provider_name}} · {{business_phone}} (telefon z Nastavení → Firma) · {{business_name}}`}
           <br />
           {`{{documents_url}} · {{virtual_tour_url}} · {{property_web_url}} · {{offer_form_url}}`}
+          <br />
+          {`{{manage_url}} = odkaz pro klienta na přeplánování/zrušení (přidává se i automaticky do patičky)`}
         </code>
       </div>
 

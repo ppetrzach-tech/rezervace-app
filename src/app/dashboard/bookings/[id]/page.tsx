@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { czDateTimeLong, czDayMonthTime } from "@/lib/datetime";
 import { CancelButton } from "../../CancelButton";
+import { EmailingToggle } from "./EmailingToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -138,12 +139,40 @@ export default async function BookingDetailPage({
                 {czDateTimeLong(booking.createdAt)}
               </dd>
             </div>
-          </dl>
-          {booking.status !== "cancelled" && (
-            <div className="mt-3 pt-3 border-t border-slate-100">
-              <CancelButton bookingId={booking.id} />
+            {booking.clientResponse && (
+              <div className="flex justify-between gap-2">
+                <dt className="text-slate-500">Reakce klienta</dt>
+                <dd className="text-right font-medium">
+                  {booking.clientResponse === "reschedule"
+                    ? "🔄 chce přeplánovat"
+                    : booking.clientResponse === "cancel"
+                      ? "❌ zrušil termín"
+                      : booking.clientResponse === "decline"
+                        ? "🚫 nemá zájem"
+                        : booking.clientResponse}
+                </dd>
+              </div>
+            )}
+            <div className="flex justify-between gap-2">
+              <dt className="text-slate-500">Automatické emaily</dt>
+              <dd className="text-right font-medium">
+                {booking.emailingStopped ? (
+                  <span className="text-orange-700">⏸ zastaveny</span>
+                ) : (
+                  <span className="text-green-700">▶ aktivní</span>
+                )}
+              </dd>
             </div>
-          )}
+          </dl>
+          <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-2 items-center">
+            <EmailingToggle
+              bookingId={booking.id}
+              stopped={booking.emailingStopped}
+            />
+            {booking.status !== "cancelled" && (
+              <CancelButton bookingId={booking.id} />
+            )}
+          </div>
         </div>
       </div>
 

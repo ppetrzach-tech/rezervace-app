@@ -186,6 +186,13 @@ model Booking {
   confirmationToken    String?   @unique
   confirmedByClientAt  DateTime?
 
+  // Reakce klienta z emailu / správy rezervace:
+  // null | "confirmed" | "reschedule" | "cancelled" | "declined"
+  clientResponse       String?
+  clientResponseAt     DateTime?
+  // Vlastník/klient zastavil další automatické emaily (follow-upy se nepošlou)
+  emailingStopped      Boolean   @default(false)
+
   // Notifikační log (jedna rezervace má víc notifikací)
   notifications NotificationLog[]
 

@@ -77,6 +77,7 @@ export async function processNotifications(): Promise<{
 
     for (const booking of bookings) {
       if (booking.notifications.length > 0) continue; // už jsme posílali
+      if (booking.emailingStopped) continue; // klient/vlastník zastavil další emaily
       if (rule.onlyIfNotConfirmed && booking.confirmedByClientAt) continue;
       processed++;
 
@@ -85,8 +86,13 @@ export async function processNotifications(): Promise<{
       const businessName = booking.tenant.name;
       const location = booking.listing?.address || booking.service.locationDetail || locationLabel(booking.service.locationType);
 
+      const baseUrl =
+        process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
       const confirmUrl = booking.confirmationToken
-        ? `${process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app"}/booking/confirm/${booking.confirmationToken}`
+        ? `${baseUrl}/booking/confirm/${booking.confirmationToken}`
+        : "";
+      const manageUrl = booking.confirmationToken
+        ? `${baseUrl}/booking/manage/${booking.confirmationToken}`
         : "";
 
       const businessPhone = booking.tenant.ownerPhone ?? "";
@@ -106,6 +112,7 @@ export async function processNotifications(): Promise<{
         time: timeFmt,
         location,
         confirm_url: confirmUrl,
+        manage_url: manageUrl,
         business_name: businessName,
         documents_url: booking.listing?.documentsUrl ?? "",
         virtual_tour_url: booking.listing?.virtualTourUrl ?? "",
@@ -124,6 +131,14 @@ export async function processNotifications(): Promise<{
                    style="display: inline-block; background: #2563eb; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                   ✅ Potvrdit termín
                 </a>
+              </div>
+            `;
+          }
+          // Nenápadný odkaz na správu rezervace (přeplánovat / zrušit / nemám zájem)
+          if (manageUrl) {
+            bodyHtml += `
+              <div style="margin: 20px 0 0; padding-top: 14px; border-top: 1px solid #e2e8f0; font-size: 13px; color: #64748b;">
+                Potřebujete <a href="${manageUrl}" style="color:#2563eb;">přeplánovat nebo zrušit termín</a>? Nebo už <a href="${manageUrl}" style="color:#2563eb;">nemáte zájem</a>?
               </div>
             `;
           }

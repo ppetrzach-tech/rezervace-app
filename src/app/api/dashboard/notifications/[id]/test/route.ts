@@ -75,6 +75,7 @@ export async function POST(
     time: "14:30",
     location: "Strojnická 12, Praha 7",
     confirm_url: `${baseUrl}/booking/confirm/UKAZKA-TOKEN`,
+    manage_url: `${baseUrl}/booking/manage/UKAZKA-TOKEN`,
     business_name: tenant.name,
     documents_url: "https://drive.google.com/ukazka-slozka",
     virtual_tour_url: "https://my.matterport.com/ukazka",
