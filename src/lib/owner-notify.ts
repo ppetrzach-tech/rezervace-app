@@ -18,7 +18,8 @@ type OwnerBookingData = {
   publicBookingsUrl?: string;
   customAnswers?: Array<{ label: string; value: string }>;
   googleEventLink?: string | null;
-  ics?: string;
+  /** HTML s tlačítky "Přidat do kalendáře" (Google / .ics). */
+  calendarHtml?: string;
 };
 
 /**
@@ -83,6 +84,8 @@ export async function sendOwnerNewBookingEmail(
         }
       </div>
 
+      ${data.calendarHtml ?? ""}
+
       <p style="color:#6b7280; font-size:12px; margin-top:24px;">
         Rezervace č. ${data.bookingId} · ${escapeHtml(data.businessName)}
       </p>
@@ -93,13 +96,5 @@ export async function sendOwnerNewBookingEmail(
     to: data.ownerEmail,
     subject: `🆕 Nová rezervace: ${data.clientName} — ${dateStr}`,
     html,
-    attachments: data.ics
-      ? [
-          {
-            filename: "schuzka.ics",
-            content: Buffer.from(data.ics, "utf8").toString("base64"),
-          },
-        ]
-      : undefined,
   });
 }

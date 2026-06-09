@@ -1,7 +1,7 @@
 import { addMinutes } from "date-fns";
 import { prisma } from "./db";
 import { sendTemplatedEmail } from "./email";
-import { generateIcs } from "./ics";
+import { calendarButtonsHtml } from "./calendar-links";
 import { locationLabel } from "./branding";
 import { czDate, czTime } from "./datetime";
 import { vocativeFirstName, formalGreeting, firstName } from "./czech-name";
@@ -134,6 +134,21 @@ export async function processNotifications(): Promise<{
               </div>
             `;
           }
+          // Tlačítka "Přidat do kalendáře" (Google + .ics ke stažení)
+          if (rule.includeIcs) {
+            bodyHtml += calendarButtonsHtml({
+              title: `${vars.service_name} — ${businessName}`,
+              startsAt: booking.startsAt,
+              endsAt: booking.endsAt,
+              location:
+                booking.listing?.address ??
+                booking.service.locationDetail ??
+                undefined,
+              icsUrl: booking.confirmationToken
+                ? `${baseUrl}/api/booking-ics/${booking.confirmationToken}`
+                : undefined,
+            });
+          }
           // Nenápadný odkaz na správu rezervace (přeplánovat / zrušit / nemám zájem)
           if (manageUrl) {
             bodyHtml += `
@@ -142,24 +157,10 @@ export async function processNotifications(): Promise<{
               </div>
             `;
           }
-          let ics: string | undefined;
-          if (rule.includeIcs) {
-            ics = generateIcs({
-              uid: `booking-${booking.id}@rezervace`,
-              title: `${booking.listing?.title || booking.service.name} — ${businessName}`,
-              description: booking.note ?? undefined,
-              location: booking.listing?.address ?? booking.service.locationDetail ?? undefined,
-              startsAt: booking.startsAt,
-              endsAt: booking.endsAt,
-              organizerName: businessName,
-              organizerEmail: booking.provider.email ?? undefined,
-            });
-          }
           const res = await sendTemplatedEmail({
             to: booking.client.email,
             subject: subject || `Připomínka — ${vars.service_name}`,
             bodyHtml,
-            ics,
             businessName,
             replyTo:
               booking.tenant.replyToEmail || booking.tenant.ownerEmail || undefined,

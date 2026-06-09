@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendTemplatedEmail } from "@/lib/email";
 import { markdownishToHtml } from "@/lib/email-format";
+import { calendarButtonsHtml } from "@/lib/calendar-links";
 import { sendSmsRaw } from "@/lib/sms";
 import { canManage } from "@/lib/perms";
 
@@ -76,6 +77,7 @@ export async function POST(
     location: "Strojnická 12, Praha 7",
     confirm_url: `${baseUrl}/booking/confirm/UKAZKA-TOKEN`,
     manage_url: `${baseUrl}/booking/manage/UKAZKA-TOKEN`,
+    ics_url: `${baseUrl}/api/booking-ics/UKAZKA-TOKEN`,
     business_name: tenant.name,
     documents_url: "https://drive.google.com/ukazka-slozka",
     virtual_tour_url: "https://my.matterport.com/ukazka",
@@ -106,6 +108,17 @@ export async function POST(
           ✅ Potvrdit termín
         </a>
       </div>`;
+  }
+  if (rule.includeIcs) {
+    const start = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    bodyHtml += calendarButtonsHtml({
+      title: `${vars.service_name} — ${tenant.name}`,
+      startsAt: start,
+      endsAt: end,
+      location: vars.location,
+      icsUrl: vars.ics_url,
+    });
   }
   bodyHtml = `<div style="background:#fef9c3; border:1px solid #fde047; border-radius:8px; padding:8px 12px; margin-bottom:16px; font-size:13px;">⚠️ Toto je <strong>testovací email</strong> s ukázkovými daty. Skutečnému klientovi se dosadí jeho údaje.</div>${bodyHtml}`;
 

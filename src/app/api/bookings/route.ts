@@ -6,7 +6,7 @@ import { isSlotStillFree } from "@/lib/slots";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 import { sendBookingConfirmationSms } from "@/lib/sms";
 import { getTenantBySlug } from "@/lib/tenant";
-import { generateIcs } from "@/lib/ics";
+import { calendarButtonsHtml } from "@/lib/calendar-links";
 import { createCalendarEvent, isCalendarConfigured } from "@/lib/google-calendar";
 import { sendOwnerNewBookingEmail } from "@/lib/owner-notify";
 import { locationLabel } from "@/lib/branding";
@@ -116,15 +116,11 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const ics = generateIcs({
-    uid: `booking-${booking.id}@rezervace`,
+  const calendarHtml = calendarButtonsHtml({
     title: `${service.name} — ${tenant.name}`,
-    description: service.description ?? undefined,
-    location: service.locationDetail ?? undefined,
     startsAt: startsAtDate,
     endsAt: endsAtDate,
-    organizerName: tenant.name,
-    organizerEmail: provider.email ?? undefined,
+    location: service.locationDetail ?? undefined,
   });
 
   const emailRes = await sendBookingConfirmationEmail({
@@ -142,7 +138,7 @@ export async function POST(req: NextRequest) {
     bookingId: booking.id,
     businessName: tenant.name,
     replyTo: tenant.replyToEmail || tenant.ownerEmail || undefined,
-    ics,
+    calendarHtml,
   });
 
   const smsRes = await sendBookingConfirmationSms({
@@ -221,7 +217,7 @@ export async function POST(req: NextRequest) {
       bookingId: booking.id,
       publicBookingsUrl: `${baseUrl}/dashboard/bookings`,
       googleEventLink,
-      ics,
+      calendarHtml,
     });
     ownerEmailSent = ownerRes.ok;
   }

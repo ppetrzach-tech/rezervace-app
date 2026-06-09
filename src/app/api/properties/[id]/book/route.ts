@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import { getTenantBySlug } from "@/lib/tenant";
 import { sendBookingConfirmationEmail } from "@/lib/email";
-import { generateIcs } from "@/lib/ics";
+import { calendarButtonsHtml } from "@/lib/calendar-links";
 import { createCalendarEvent, isCalendarConfigured } from "@/lib/google-calendar";
 import { sendOwnerNewBookingEmail } from "@/lib/owner-notify";
 
@@ -146,15 +146,14 @@ export async function POST(
     },
   });
 
-  const ics = generateIcs({
-    uid: `booking-${booking.id}@rezervace`,
+  const appBaseUrl =
+    process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+  const calendarHtml = calendarButtonsHtml({
     title: `${listing.title}${tenant.name ? ` — ${tenant.name}` : ""}`,
-    description: listing.description ?? undefined,
-    location: listing.address ?? undefined,
     startsAt: slot.startsAt,
     endsAt: slot.endsAt,
-    organizerName: tenant.name,
-    organizerEmail: listing.provider?.email ?? undefined,
+    location: listing.address ?? undefined,
+    icsUrl: `${appBaseUrl}/api/booking-ics/${confirmationToken}`,
   });
 
   const emailRes = await sendBookingConfirmationEmail({
@@ -172,7 +171,7 @@ export async function POST(
     bookingId: booking.id,
     businessName: tenant.name,
     replyTo: tenant.replyToEmail || tenant.ownerEmail || undefined,
-    ics,
+    calendarHtml,
   });
 
   // Zalogovat potvrzovací email do historie notifikací
@@ -251,7 +250,7 @@ export async function POST(
       publicBookingsUrl: `${baseUrl}/dashboard/bookings`,
       customAnswers: answers,
       googleEventLink,
-      ics,
+      calendarHtml,
     });
     ownerEmailSent = ownerRes.ok;
   }

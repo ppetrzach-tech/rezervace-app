@@ -17,22 +17,13 @@ type BookingEmailData = {
   note?: string | null;
   bookingId: string;
   businessName?: string;
-  ics?: string;
+  /** HTML s tlačítky "Přidat do kalendáře" (Google / .ics), vkládá se do těla. */
+  calendarHtml?: string;
   replyTo?: string;
 };
 
 function formatDateCs(date: Date): string {
   return czDateTimeLong(date);
-}
-
-function icsAttachment(ics?: string) {
-  if (!ics) return undefined;
-  return [
-    {
-      filename: "schuzka.ics",
-      content: Buffer.from(ics, "utf8").toString("base64"),
-    },
-  ];
 }
 
 export async function sendBookingConfirmationEmail(
@@ -54,7 +45,7 @@ export async function sendBookingConfirmationEmail(
         ${data.showPrice !== false && data.priceCzk > 0 ? `<tr><td style="padding: 8px 0; color: #6b7280;">Cena:</td><td>${data.priceCzk} Kč</td></tr>` : ""}
         ${data.note ? `<tr><td style="padding: 8px 0; color: #6b7280;">Poznámka:</td><td>${escapeHtml(data.note)}</td></tr>` : ""}
       </table>
-      ${data.ics ? `<p style="color: #6b7280; font-size: 13px;">📅 V příloze najdete kalendářovou událost (.ics) — můžete si ji přidat do svého kalendáře.</p>` : ""}
+      ${data.calendarHtml ?? ""}
       <p style="color: #6b7280; font-size: 13px;">Rezervační číslo: ${data.bookingId}</p>
       <p>Potřebujete změnu? Odpovězte na tento email.</p>
     </div>
@@ -64,7 +55,6 @@ export async function sendBookingConfirmationEmail(
     to: data.clientEmail,
     subject: `Potvrzení rezervace — ${data.serviceName}`,
     html,
-    attachments: icsAttachment(data.ics),
     replyTo: data.replyTo,
   });
 }
@@ -98,7 +88,6 @@ export type TemplatedEmailParams = {
   to: string;
   subject: string;
   bodyHtml: string;
-  ics?: string;
   businessName?: string;
   replyTo?: string;
 };
@@ -116,7 +105,6 @@ export async function sendTemplatedEmail(
     to: p.to,
     subject: p.subject,
     html,
-    attachments: icsAttachment(p.ics),
     replyTo: p.replyTo,
   });
 }
