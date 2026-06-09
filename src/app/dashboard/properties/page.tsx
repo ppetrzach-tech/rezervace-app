@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { czDayMonthTime } from "@/lib/datetime";
+import { PUBLIC_BASE_URL } from "@/lib/base-url";
 import { CopyButton } from "../CopyButton";
 import { ShareButton } from "../ShareModal";
 import { DuplicateButton } from "./DuplicateButton";
@@ -171,7 +172,7 @@ export default async function PropertiesPage() {
     orderBy: [{ active: "desc" }, { createdAt: "desc" }],
   });
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+  const baseUrl = PUBLIC_BASE_URL;
   const active = listings.filter((l) => l.active);
   const inactive = listings.filter((l) => !l.active);
 

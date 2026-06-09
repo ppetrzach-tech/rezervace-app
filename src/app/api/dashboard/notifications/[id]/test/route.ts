@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { sendTemplatedEmail } from "@/lib/email";
 import { markdownishToHtml } from "@/lib/email-format";
 import { calendarButtonsHtml } from "@/lib/calendar-links";
+import { PUBLIC_BASE_URL } from "@/lib/base-url";
 import { sendSmsRaw } from "@/lib/sms";
 import { canManage } from "@/lib/perms";
 
@@ -58,7 +59,7 @@ export async function POST(
   }
 
   // Ukázková data (dummy)
-  const baseUrl = process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+  const baseUrl = PUBLIC_BASE_URL;
   const phone = tenant.ownerPhone || "724 191 620";
   const vars: Vars = {
     client_name: "Marie Nováková",

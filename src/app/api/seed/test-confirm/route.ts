@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { addMinutes } from "date-fns";
 import { prisma } from "@/lib/db";
+import { PUBLIC_BASE_URL } from "@/lib/base-url";
 
 /**
  * Diagnostika potvrzovacího tlačítka: vytvoří dočasnou rezervaci s tokenem,
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Neautorizováno" }, { status: 401 });
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+  const baseUrl = PUBLIC_BASE_URL;
 
   // Dočasný tenant + minimální data
   await prisma.tenant.deleteMany({ where: { slug: "confirm-test" } });

@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { addDays, startOfDay, subDays } from "date-fns";
 import { czDateTimeLong, czTime, czDayMonthTime } from "@/lib/datetime";
+import { PUBLIC_BASE_URL } from "@/lib/base-url";
 import { CopyButton } from "./CopyButton";
 import { DonutChart, Sparkline, ProgressBar } from "./DashboardWidgets";
 
@@ -101,7 +102,7 @@ export default async function DashboardHome() {
     ).length;
   });
 
-  const publicUrl = `${process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app"}/${tenant.slug}`;
+  const publicUrl = `${PUBLIC_BASE_URL}/${tenant.slug}`;
   const confirmRate = todayBookings.length
     ? Math.round(
         (todayBookings.filter((b) => b.confirmedByClientAt).length /

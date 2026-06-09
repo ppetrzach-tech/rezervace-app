@@ -7,6 +7,7 @@ import { markdownishToHtml } from "@/lib/email-format";
 import { deleteCalendarEvent } from "@/lib/google-calendar";
 import { formalGreeting } from "@/lib/czech-name";
 import { czDateTimeLong } from "@/lib/datetime";
+import { PUBLIC_BASE_URL } from "@/lib/base-url";
 
 const schema = z.object({
   action: z.enum(["reschedule", "cancel", "decline"]),
@@ -56,7 +57,7 @@ export async function POST(
     return NextResponse.json({ error: "Rezervace nenalezena" }, { status: 404 });
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+  const baseUrl = PUBLIC_BASE_URL;
   const isFuture = booking.startsAt.getTime() > Date.now();
   const propertyUrl = booking.listing
     ? `${baseUrl}/${booking.tenant.slug}/p/${booking.listing.slug}`

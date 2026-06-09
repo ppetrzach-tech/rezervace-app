@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { getTenantBySlug } from "@/lib/tenant";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 import { calendarButtonsHtml } from "@/lib/calendar-links";
+import { PUBLIC_BASE_URL } from "@/lib/base-url";
 import { createCalendarEvent, isCalendarConfigured } from "@/lib/google-calendar";
 import { sendOwnerNewBookingEmail } from "@/lib/owner-notify";
 
@@ -146,8 +147,7 @@ export async function POST(
     },
   });
 
-  const appBaseUrl =
-    process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+  const appBaseUrl = PUBLIC_BASE_URL;
   const calendarHtml = calendarButtonsHtml({
     title: `${listing.title}${tenant.name ? ` — ${tenant.name}` : ""}`,
     startsAt: slot.startsAt,
@@ -233,7 +233,7 @@ export async function POST(
   // Email vlastníkovi (makléři)
   let ownerEmailSent = false;
   if (tenant.ownerEmail) {
-    const baseUrl = process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+    const baseUrl = PUBLIC_BASE_URL;
     const ownerRes = await sendOwnerNewBookingEmail({
       ownerEmail: tenant.ownerEmail,
       businessName: tenant.name,

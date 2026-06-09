@@ -7,6 +7,7 @@ import { sendBookingConfirmationEmail } from "@/lib/email";
 import { sendBookingConfirmationSms } from "@/lib/sms";
 import { getTenantBySlug } from "@/lib/tenant";
 import { calendarButtonsHtml } from "@/lib/calendar-links";
+import { PUBLIC_BASE_URL } from "@/lib/base-url";
 import { createCalendarEvent, isCalendarConfigured } from "@/lib/google-calendar";
 import { sendOwnerNewBookingEmail } from "@/lib/owner-notify";
 import { locationLabel } from "@/lib/branding";
@@ -201,7 +202,7 @@ export async function POST(req: NextRequest) {
   // Email vlastníkovi
   let ownerEmailSent = false;
   if (tenant.ownerEmail) {
-    const baseUrl = process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+    const baseUrl = PUBLIC_BASE_URL;
     const ownerRes = await sendOwnerNewBookingEmail({
       ownerEmail: tenant.ownerEmail,
       businessName: tenant.name,

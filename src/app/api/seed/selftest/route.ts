@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { addMinutes } from "date-fns";
 import { prisma } from "@/lib/db";
 import { processNotifications } from "@/lib/notification-engine";
+import { PUBLIC_BASE_URL } from "@/lib/base-url";
 
 /**
  * End-to-end self-test celého notifikačního řetězce.
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
   const clientEmail = (searchParams.get("clientEmail") || "test@example.com")
     .toLowerCase()
     .trim();
-  const baseUrl = process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+  const baseUrl = PUBLIC_BASE_URL;
 
   // 1) Čistý tenant
   await prisma.tenant.deleteMany({ where: { slug: "selftest" } });

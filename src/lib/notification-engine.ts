@@ -2,6 +2,7 @@ import { addMinutes } from "date-fns";
 import { prisma } from "./db";
 import { sendTemplatedEmail } from "./email";
 import { calendarButtonsHtml } from "./calendar-links";
+import { PUBLIC_BASE_URL } from "./base-url";
 import { locationLabel } from "./branding";
 import { czDate, czTime } from "./datetime";
 import { vocativeFirstName, formalGreeting, firstName } from "./czech-name";
@@ -86,8 +87,7 @@ export async function processNotifications(): Promise<{
       const businessName = booking.tenant.name;
       const location = booking.listing?.address || booking.service.locationDetail || locationLabel(booking.service.locationType);
 
-      const baseUrl =
-        process.env.NEXTAUTH_URL || "https://rezervace-app.vercel.app";
+      const baseUrl = PUBLIC_BASE_URL;
       const confirmUrl = booking.confirmationToken
         ? `${baseUrl}/booking/confirm/${booking.confirmationToken}`
         : "";
