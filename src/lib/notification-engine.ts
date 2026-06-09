@@ -149,11 +149,17 @@ export async function processNotifications(): Promise<{
                 : undefined,
             });
           }
-          // Nenápadný odkaz na správu rezervace (přeplánovat / zrušit / nemám zájem)
+          // Nenápadný odkaz na správu rezervace.
+          // PŘED prohlídkou (offset < 0): lze přeplánovat / zrušit / odmítnout.
+          // PO prohlídce (offset >= 0): termín už proběhl → nabízíme jen "nemám zájem".
           if (manageUrl) {
+            const afterViewing = rule.offsetMinutes >= 0;
+            const footerInner = afterViewing
+              ? `Už <a href="${manageUrl}" style="color:#2563eb;">nemáte o nemovitost zájem</a>? Dejte mi prosím vědět.`
+              : `Potřebujete <a href="${manageUrl}" style="color:#2563eb;">přeplánovat nebo zrušit termín</a>? Nebo už <a href="${manageUrl}" style="color:#2563eb;">nemáte zájem</a>?`;
             bodyHtml += `
               <div style="margin: 20px 0 0; padding-top: 14px; border-top: 1px solid #e2e8f0; font-size: 13px; color: #64748b;">
-                Potřebujete <a href="${manageUrl}" style="color:#2563eb;">přeplánovat nebo zrušit termín</a>? Nebo už <a href="${manageUrl}" style="color:#2563eb;">nemáte zájem</a>?
+                ${footerInner}
               </div>
             `;
           }
