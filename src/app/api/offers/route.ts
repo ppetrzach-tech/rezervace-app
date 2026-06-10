@@ -14,7 +14,7 @@ const schema = z.object({
   name: z.string().trim().min(2).max(200),
   email: z.string().trim().email().max(200),
   phone: z.string().trim().min(5).max(40),
-  amountCzk: z.number().int().positive().max(9_999_999_999).optional(),
+  amountCzk: z.number().int().positive().max(9_999_999_999),
   financing: z.string().trim().max(100).optional(),
   message: z.string().trim().max(2000).optional(),
 });
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Vyplňte prosím jméno, e-mail a telefon." },
+      { error: "Zkontrolujte prosím vyplněná pole — jméno, e-mail, telefon a nabízenou cenu." },
       { status: 400 },
     );
   }

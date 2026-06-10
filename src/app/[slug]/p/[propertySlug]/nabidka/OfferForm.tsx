@@ -37,6 +37,10 @@ export function OfferForm({
       setError("Vyplňte prosím jméno, e-mail a telefon.");
       return;
     }
+    if (!amountCzk) {
+      setError("Uveďte prosím nabízenou cenu.");
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch("/api/offers", {
@@ -82,8 +86,8 @@ export function OfferForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       <p className="text-sm text-slate-600">
-        Máte zájem o <strong>{listingTitle}</strong>? Pošlete nezávaznou cenovou
-        nabídku — ozveme se Vám.
+        Máte zájem o <strong>{listingTitle}</strong>? Napište cenu, kterou jste
+        připraveni za nemovitost nabídnout — co nejdříve se Vám ozvu.
       </p>
 
       <div>
@@ -129,7 +133,9 @@ export function OfferForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Nabízená cena (Kč)</label>
+        <label className="block text-sm font-medium mb-1">
+          Nabízená cena (Kč) <span className="text-red-500">*</span>
+        </label>
         <div className="relative">
           <input
             inputMode="numeric"
@@ -181,7 +187,7 @@ export function OfferForm({
         {busy ? "Odesílám…" : "Odeslat nabídku"}
       </button>
       <p className="text-xs text-slate-400 text-center">
-        Nezávazné — slouží k zahájení jednání.
+        Odesláním stvrzujete vážný zájem o koupi za uvedenou cenu.
       </p>
     </form>
   );
