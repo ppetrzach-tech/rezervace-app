@@ -202,8 +202,12 @@ export async function testCalendarAccess(
   const token = await getAccessToken();
   if (!token) return { ok: false, error: "Service Account není nakonfigurován" };
 
+  // Testujeme přes endpoint UDÁLOSTÍ (ne metadata kalendáře) — oprávnění
+  // service accountu je `calendar.events`, takže Calendars.get vrací 403 i u
+  // správně nasdíleného kalendáře. Events.list odpovídá tomu, co appka reálně
+  // dělá (zápis/čtení událostí), takže test je přesný.
   const res = await fetch(
-    `${API_BASE}/calendars/${encodeURIComponent(calendarId)}`,
+    `${API_BASE}/calendars/${encodeURIComponent(calendarId)}/events?maxResults=1`,
     {
       headers: { Authorization: `Bearer ${token}` },
     },
@@ -216,7 +220,7 @@ export async function testCalendarAccess(
         res.status === 404
           ? "Kalendář nenalezen — zkontrolujte Calendar ID."
           : res.status === 403
-            ? "Kalendář není nasdílen na service account. Sdílejte ho přes Google Calendar Settings → Share."
+            ? "Kalendář není nasdílen na service account. Sdílejte ho přes Google Calendar → Nastavení a sdílení → s právem „Provádět změny v událostech“."
             : `${res.status}: ${text.slice(0, 300)}`,
     };
   }
