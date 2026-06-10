@@ -34,37 +34,54 @@ export default async function OfferPage({
   if (!listing) notFound();
 
   return (
-    <main className="min-h-screen bg-slate-50 py-8 px-4">
+    <main className="min-h-screen bg-gradient-to-b from-brand-50 via-slate-50 to-slate-50 py-8 px-4">
       <style
         dangerouslySetInnerHTML={{
           __html: brandCssVariablesForColor(tenant.primaryColor),
         }}
       />
       <div className="max-w-lg mx-auto">
-        <div className="text-center mb-6">
-          <div className="text-sm text-slate-500">{tenant.name}</div>
-          <h1 className="text-2xl font-bold mt-1">Cenová nabídka</h1>
-          <p className="text-slate-600 mt-1">{listing.title}</p>
-          {listing.address && (
-            <p className="text-sm text-slate-500">📍 {listing.address}</p>
-          )}
-        </div>
+        <div className="rounded-3xl overflow-hidden shadow-lg border border-slate-200 bg-white">
+          {/* Barevný hero */}
+          <div className="relative">
+            {listing.imageUrl ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={listing.imageUrl}
+                  alt={listing.title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
+              </>
+            ) : (
+              <div className="h-40 bg-gradient-to-br from-brand-500 to-brand-700" />
+            )}
+            <div
+              className={`${listing.imageUrl ? "absolute bottom-0 left-0 right-0 text-white" : "absolute inset-0 flex flex-col justify-center text-white"} p-5`}
+            >
+              <div className="text-xs uppercase tracking-wide opacity-90">
+                {tenant.name}
+              </div>
+              <div className="inline-flex items-center gap-2 text-2xl font-bold mt-1">
+                <span>💰</span>
+                <span>Cenová nabídka</span>
+              </div>
+              <div className="text-sm opacity-95 mt-1">{listing.title}</div>
+              {listing.address && (
+                <div className="text-xs opacity-90 mt-0.5">📍 {listing.address}</div>
+              )}
+            </div>
+          </div>
 
-        {listing.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={listing.imageUrl}
-            alt={listing.title}
-            className="w-full h-44 object-cover rounded-xl mb-6 border border-slate-200"
-          />
-        )}
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <OfferForm
-            tenantSlug={tenant.slug}
-            listingSlug={listing.slug}
-            listingTitle={listing.title}
-          />
+          {/* Formulář */}
+          <div className="p-6">
+            <OfferForm
+              tenantSlug={tenant.slug}
+              listingSlug={listing.slug}
+              listingTitle={listing.title}
+            />
+          </div>
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-6">

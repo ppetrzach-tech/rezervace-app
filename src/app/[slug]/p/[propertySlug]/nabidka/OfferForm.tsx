@@ -72,12 +72,16 @@ export function OfferForm({
 
   if (done) {
     return (
-      <div className="text-center py-4">
-        <div className="text-4xl mb-3">✅</div>
-        <h2 className="text-xl font-semibold mb-2">Nabídka odeslána — děkujeme!</h2>
+      <div className="text-center py-6">
+        <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-3xl shadow-lg">
+          ✅
+        </div>
+        <h2 className="text-xl font-bold mt-4 mb-2">
+          Nabídka odeslána — děkujeme!
+        </h2>
         <p className="text-slate-600">
           Vaši cenovou nabídku jsme přijali a brzy se Vám ozveme. Potvrzení
-          jsme Vám poslali e-mailem.
+          jsme Vám poslali e-mailem. 📧
         </p>
       </div>
     );
@@ -132,22 +136,25 @@ export function OfferForm({
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">
-          Nabízená cena (Kč) <span className="text-red-500">*</span>
+      <div className="rounded-xl border-2 border-green-200 bg-green-50 p-4">
+        <label className="block text-sm font-semibold text-green-800 mb-1">
+          💰 Vaše nabízená cena <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <input
             inputMode="numeric"
-            className="input pr-10"
-            placeholder="např. 4 500 000"
+            className="w-full rounded-lg border border-green-300 bg-white px-3 py-3 pr-12 text-2xl font-bold text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            placeholder="4 500 000"
             value={amount}
             onChange={(e) => setAmount(formatAmount(e.target.value))}
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 font-semibold">
             Kč
           </span>
         </div>
+        <p className="text-xs text-green-700/80 mt-1">
+          Cena, kterou jste připraveni za nemovitost nabídnout.
+        </p>
       </div>
 
       <div>

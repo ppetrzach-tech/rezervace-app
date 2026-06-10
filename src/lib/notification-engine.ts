@@ -125,9 +125,9 @@ export async function processNotifications(): Promise<{
         documents_url: booking.listing?.documentsUrl ?? "",
         virtual_tour_url: booking.listing?.virtualTourUrl ?? "",
         property_web_url: booking.listing?.propertyWebUrl ?? "",
-        // Vestavěný nabídkový formulář; pokud má vlastník externí, použije se ten.
+        // VŽDY vestavěný nabídkový formulář — aby nehrozil starý externí odkaz.
         offer_url: builtInOfferUrl,
-        offer_form_url: booking.listing?.offerFormUrl || builtInOfferUrl,
+        offer_form_url: builtInOfferUrl,
       };
 
       try {
