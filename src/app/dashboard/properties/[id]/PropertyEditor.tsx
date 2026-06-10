@@ -257,25 +257,33 @@ export function PropertyEditor({
   return (
     <div className="space-y-6">
       {/* Hlavička */}
-      <div className="flex justify-between items-start gap-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div className="flex-1 min-w-0">
           <Link
             href="/dashboard/properties"
-            className="text-sm text-slate-500 hover:text-brand-700"
+            className="text-sm text-slate-500 hover:text-brand-700 whitespace-nowrap"
           >
             ← Zpět na nemovitosti
           </Link>
-          <h1 className="text-3xl font-bold mt-1">{data.title || "Bez názvu"}</h1>
-          <div className="text-sm text-slate-500 mt-1 flex flex-wrap gap-3">
-            <span>{availableSlots.length} volných slotů</span>
+          <h1 className="text-2xl sm:text-3xl font-bold mt-1 break-words">
+            {data.title || "Bez názvu"}
+          </h1>
+          <div className="text-sm text-slate-500 mt-1 flex flex-wrap gap-x-3 gap-y-1">
+            <span className="whitespace-nowrap">
+              {availableSlots.length} volných slotů
+            </span>
             <span>•</span>
-            <Link href={publicPath} target="_blank" className="text-brand-700">
+            <Link
+              href={publicPath}
+              target="_blank"
+              className="text-brand-700 whitespace-nowrap"
+            >
               Otevřít veřejnou stránku ↗
             </Link>
           </div>
         </div>
-        <div className="flex flex-col gap-2 items-end">
-          <div className="flex gap-2">
+        <div className="flex flex-col gap-2 items-start sm:items-end shrink-0">
+          <div className="flex gap-2 flex-wrap">
             <DuplicateButton propertyId={data.id} label="⧉ Duplikovat" />
             <CopyButton text={publicUrl} label="📋 Kopírovat" />
             <ShareButton url={publicUrl} label="📱 QR kód" title={`Sdílení: ${data.title}`} />
