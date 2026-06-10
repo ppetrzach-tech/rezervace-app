@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { deleteCalendarEvent } from "@/lib/google-calendar";
 import { canManage } from "@/lib/perms";
+import { sendBookingChangeEmailToClient } from "@/lib/booking-client-email";
+
+const schema = z.object({ action: z.enum(["cancel", "reschedule"]).optional() });
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
   const session = await getServerSession(authOptions);
@@ -14,7 +18,25 @@ export async function POST(
     return NextResponse.json({ error: "Nepřihlášen" }, { status: 401 });
   }
 
-  const booking = await prisma.booking.findUnique({ where: { id: params.id } });
+  let parsedBody: unknown = {};
+  try {
+    parsedBody = await req.json();
+  } catch {
+    /* prázdné tělo = výchozí "cancel" */
+  }
+  const p = schema.safeParse(parsedBody);
+  const action = (p.success && p.data.action) || "cancel";
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: params.id },
+    include: {
+      client: true,
+      service: true,
+      provider: true,
+      listing: true,
+      tenant: true,
+    },
+  });
   if (!booking) {
     return NextResponse.json({ error: "Rezervace neexistuje" }, { status: 404 });
   }
@@ -29,26 +51,43 @@ export async function POST(
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
 
+  // Zrušíme rezervaci, uvolníme slot (může se znovu rezervovat) a zastavíme
+  // další automatické emaily k této rezervaci.
   await prisma.booking.update({
     where: { id: params.id },
-    data: { status: "cancelled" },
+    data: { status: "cancelled", eventSlotId: null, emailingStopped: true },
   });
 
   // Smažeme i událost v Google Calendar (pokud byla vytvořena)
-  if (booking.googleEventId) {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: booking.tenantId },
-    });
-    if (tenant?.googleCalendarId) {
-      const res = await deleteCalendarEvent(
-        tenant.googleCalendarId,
-        booking.googleEventId,
-      );
-      if (!res.ok) {
-        console.warn("[cancel] Google Calendar delete failed:", res.error);
-      }
+  if (booking.googleEventId && booking.tenant.googleCalendarId) {
+    const res = await deleteCalendarEvent(
+      booking.tenant.googleCalendarId,
+      booking.googleEventId,
+    );
+    if (!res.ok) {
+      console.warn("[cancel] Google Calendar delete failed:", res.error);
     }
   }
 
-  return NextResponse.json({ ok: true });
+  // E-mail klientovi (zrušení / výzva k přeplánování)
+  let clientEmailed = false;
+  try {
+    const r = await sendBookingChangeEmailToClient(booking, action);
+    clientEmailed = r.ok;
+    await prisma.notificationLog
+      .create({
+        data: {
+          bookingId: booking.id,
+          ruleId: null,
+          channel: "email",
+          status: r.ok ? "sent" : "failed",
+          error: r.error ?? null,
+        },
+      })
+      .catch(() => {});
+  } catch (e) {
+    console.warn("[cancel] client email failed:", e);
+  }
+
+  return NextResponse.json({ ok: true, action, clientEmailed });
 }

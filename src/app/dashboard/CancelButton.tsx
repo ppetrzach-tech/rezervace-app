@@ -8,9 +8,18 @@ export function CancelButton({ bookingId }: { bookingId: string }) {
   const [busy, setBusy] = useState(false);
 
   async function cancel() {
-    if (!confirm("Opravdu zrušit tuto rezervaci?")) return;
+    if (
+      !confirm(
+        "Opravdu zrušit tuto rezervaci?\n\nKlientovi se pošle e-mail o zrušení a slot se uvolní.",
+      )
+    )
+      return;
     setBusy(true);
-    const res = await fetch(`/api/bookings/${bookingId}/cancel`, { method: "POST" });
+    const res = await fetch(`/api/bookings/${bookingId}/cancel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "cancel" }),
+    });
     setBusy(false);
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { czDateTimeLong, czDayMonthTime } from "@/lib/datetime";
 import { CancelButton } from "../../CancelButton";
 import { EmailingToggle } from "./EmailingToggle";
+import { RescheduleButton } from "./RescheduleButton";
 import { canManage } from "@/lib/perms";
 
 export const dynamic = "force-dynamic";
@@ -180,7 +181,10 @@ export default async function BookingDetailPage({
               stopped={booking.emailingStopped}
             />
             {booking.status !== "cancelled" && (
-              <CancelButton bookingId={booking.id} />
+              <>
+                <RescheduleButton bookingId={booking.id} />
+                <CancelButton bookingId={booking.id} />
+              </>
             )}
           </div>
         </div>
