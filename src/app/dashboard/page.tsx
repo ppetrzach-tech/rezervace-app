@@ -114,8 +114,8 @@ export default async function DashboardHome() {
   return (
     <div className="space-y-6">
       {/* Hlavička */}
-      <header className="bg-gradient-to-br from-brand-600 to-brand-700 text-white rounded-2xl p-6 shadow-md">
-        <h1 className="text-3xl font-bold">
+      <header className="bg-gradient-to-br from-brand-600 to-brand-700 text-white rounded-2xl p-5 sm:p-6 shadow-md">
+        <h1 className="text-2xl sm:text-3xl font-bold">
           Ahoj {session.user.name?.split(" ")[0] ?? ""} 👋
         </h1>
         <p className="opacity-90 mt-1">
@@ -255,9 +255,9 @@ export default async function DashboardHome() {
                 <div className="text-xs text-slate-500">celkem</div>
               </div>
             </div>
-            <div className="flex items-end gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-2">
               <Sparkline data={sparklineData} color="#2563eb" height={50} />
-              <div className="flex-1 grid grid-cols-7 text-center text-xs text-slate-400 mt-2">
+              <div className="flex-1 grid grid-cols-7 text-center text-xs text-slate-400 mt-2 min-w-0">
                 {Array.from({ length: 7 }, (_, i) => {
                   const d = subDays(today, 6 - i);
                   return (

@@ -8,6 +8,9 @@
 
 body {
   @apply bg-slate-50 text-slate-900;
+  /* Zabrání vodorovnému posouvání na mobilu (přetékající prvky se ořežou),
+     aniž by se rozbila position: sticky horní lišta. */
+  overflow-x: clip;
 }
 
 .btn {

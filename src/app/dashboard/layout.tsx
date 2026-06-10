@@ -25,10 +25,13 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex justify-between items-center">
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-brand-700">
-            <span className="text-lg">📅</span>
-            <span>{tenant.name}</span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex justify-between items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 font-semibold text-brand-700 min-w-0"
+          >
+            <span className="text-lg shrink-0">📅</span>
+            <span className="truncate">{tenant.name}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1 text-sm">
             <NavItem href="/dashboard" label="Dashboard" />
@@ -56,7 +59,9 @@ export default async function DashboardLayout({
           <MobileNavItem href="/dashboard/settings" label="Nastavení" />
         </nav>
       </header>
-      <main className="max-w-6xl mx-auto px-6 py-8">{children}</main>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 overflow-x-hidden">
+        {children}
+      </main>
     </div>
   );
 }
