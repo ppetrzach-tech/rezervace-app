@@ -170,9 +170,9 @@ export default async function DashboardHome() {
       </section>
 
       {/* Hlavní layout */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-6 min-w-0">
         {/* Levý sloupec — Dnes + Trend */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 min-w-0">
           {/* Dnešní prohlídky */}
           <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
@@ -318,7 +318,7 @@ export default async function DashboardHome() {
         </div>
 
         {/* Pravý sloupec — Donut + Quick share */}
-        <aside className="space-y-6">
+        <aside className="space-y-6 min-w-0">
           {/* Donut chart */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -419,7 +419,7 @@ function StatCard({
 }) {
   return (
     <div
-      className={`bg-gradient-to-br ${gradient} text-white rounded-xl p-4 shadow-sm relative overflow-hidden`}
+      className={`bg-gradient-to-br ${gradient} text-white rounded-xl p-4 shadow-sm relative overflow-hidden min-w-0`}
     >
       <div className="absolute -right-4 -bottom-4 text-7xl opacity-10">
         {icon}

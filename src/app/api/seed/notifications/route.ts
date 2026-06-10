@@ -77,6 +77,10 @@ Můžete také využít naši virtuální prohlídku na následujícím odkazu, 
 
 - [🎥 Otevřít virtuální prohlídku]({{virtual_tour_url}})
 
+A pokud jste se rozhodli, můžete rovnou poslat svou cenovou nabídku:
+
+[📝 Otevřít nabídkový formulář]({{offer_form_url}})
+
 Děkuji a přeji pěkný den,
 {{provider_name}}
 Tel.: {{business_phone}}`;
