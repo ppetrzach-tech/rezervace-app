@@ -118,3 +118,38 @@ export function gendered(
 ): string {
   return isFemaleName(fullName) ? feminine : masculine;
 }
+
+/**
+ * Převede formální (vykací) text do rodu podle pohlaví klienta.
+ *
+ * Cílí jen na jednoznačné oslovení adresáta — spojení typu „byste měli",
+ * „byste si chtěli", „jste vítáni" a lomítkové tvary „chtěl/a". Plurálové
+ * tvary se převedou na mužský/ženský singulár. Vodicí slovo (byste/abyste/
+ * jste) se zachová včetně velikosti písmen díky zpětnému odkazu.
+ *
+ * Bezpečné pro běžné e-maily o prohlídce; neřeší zcela libovolný text.
+ */
+export function genderizeFormalText(text: string, fullName: string): string {
+  if (!text) return text;
+  const female = isFemaleName(fullName);
+  const rules: Array<[RegExp, string, string]> = [
+    [/\b(a?byste)\s+měli\b/gi, "$1 měl", "$1 měla"],
+    [/\b(a?byste)(\s+si)?\s+chtěli\b/gi, "$1$2 chtěl", "$1$2 chtěla"],
+    [/\b(a?byste)(\s+si)?\s+přáli\b/gi, "$1$2 přál", "$1$2 přála"],
+    [/\b(a?byste)\s+potřebovali\b/gi, "$1 potřeboval", "$1 potřebovala"],
+    [/\b(a?byste)\s+chtěli\b/gi, "$1 chtěl", "$1 chtěla"],
+    [/\b(jste)\s+vítáni\b/gi, "$1 vítán", "$1 vítána"],
+    [/\b(jste)\s+spokojeni\b/gi, "$1 spokojen", "$1 spokojena"],
+    [/\bspokojen\/á\b/gi, "spokojen", "spokojena"],
+    [/\bchtěl\/a\b/gi, "chtěl", "chtěla"],
+    [/\bměl\/a\b/gi, "měl", "měla"],
+    [/\brád\/a\b/gi, "rád", "ráda"],
+    [/\bdostal\/a\b/gi, "dostal", "dostala"],
+    [/\bvítán\/a\b/gi, "vítán", "vítána"],
+  ];
+  let out = text;
+  for (const [re, masc, fem] of rules) {
+    out = out.replace(re, female ? fem : masc);
+  }
+  return out;
+}

@@ -7,6 +7,7 @@ import { sendTemplatedEmail } from "@/lib/email";
 import { markdownishToHtml } from "@/lib/email-format";
 import { calendarButtonsHtml } from "@/lib/calendar-links";
 import { PUBLIC_BASE_URL } from "@/lib/base-url";
+import { genderizeFormalText } from "@/lib/czech-name";
 import { sendSmsRaw } from "@/lib/sms";
 import { canManage } from "@/lib/perms";
 
@@ -87,7 +88,9 @@ export async function POST(
   };
 
   const subject =
-    "[TEST] " + (applyTemplate(rule.subject ?? "", vars) || "Ukázková notifikace");
+    "[TEST] " +
+    (genderizeFormalText(applyTemplate(rule.subject ?? "", vars), vars.client_name) ||
+      "Ukázková notifikace");
 
   if (rule.channel === "sms") {
     const message = applyTemplate(rule.body, vars);
@@ -101,7 +104,9 @@ export async function POST(
     });
   }
 
-  let bodyHtml = plaintextToHtml(applyTemplate(rule.body, vars));
+  let bodyHtml = plaintextToHtml(
+    genderizeFormalText(applyTemplate(rule.body, vars), vars.client_name),
+  );
   if (rule.includeConfirmButton) {
     bodyHtml += `
       <div style="margin: 24px 0;">

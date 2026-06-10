@@ -5,7 +5,12 @@ import { calendarButtonsHtml } from "./calendar-links";
 import { PUBLIC_BASE_URL } from "./base-url";
 import { locationLabel } from "./branding";
 import { czDate, czTime } from "./datetime";
-import { vocativeFirstName, formalGreeting, firstName } from "./czech-name";
+import {
+  vocativeFirstName,
+  formalGreeting,
+  firstName,
+  genderizeFormalText,
+} from "./czech-name";
 import { markdownishToHtml } from "./email-format";
 
 type Vars = Record<string, string>;
@@ -122,8 +127,14 @@ export async function processNotifications(): Promise<{
 
       try {
         if (rule.channel === "email") {
-          const subject = applyTemplate(rule.subject ?? "", vars);
-          let bodyHtml = plaintextToHtml(applyTemplate(rule.body, vars));
+          const clientName = booking.client.name;
+          const subject = genderizeFormalText(
+            applyTemplate(rule.subject ?? "", vars),
+            clientName,
+          );
+          let bodyHtml = plaintextToHtml(
+            genderizeFormalText(applyTemplate(rule.body, vars), clientName),
+          );
           if (rule.includeConfirmButton && confirmUrl) {
             bodyHtml += `
               <div style="margin: 24px 0;">
@@ -190,7 +201,10 @@ export async function processNotifications(): Promise<{
             },
           });
         } else if (rule.channel === "sms") {
-          const message = applyTemplate(rule.body, vars);
+          const message = genderizeFormalText(
+            applyTemplate(rule.body, vars),
+            booking.client.name,
+          );
           const { sendSmsRaw } = await import("./sms");
           const res = await sendSmsRaw(booking.client.phone, message);
           if (res.ok) smsSent++;
