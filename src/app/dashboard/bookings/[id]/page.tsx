@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { czDateTimeLong, czDayMonthTime } from "@/lib/datetime";
 import { CancelButton } from "../../CancelButton";
 import { EmailingToggle } from "./EmailingToggle";
+import { canManage } from "@/lib/perms";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +30,10 @@ export default async function BookingDetailPage({
   });
   if (!booking) notFound();
 
-  // Oprávnění — staff vidí jen své
+  // Oprávnění — owner i manažer/asistent (staff bez providerId) vidí vše
+  // včetně odpovědí z formuláře; člen týmu napojený na providera jen své.
   if (
-    session.user.role !== "owner" &&
+    !canManage(session.user) &&
     booking.providerId !== session.user.providerId
   ) {
     redirect("/dashboard/bookings");
