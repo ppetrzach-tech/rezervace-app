@@ -85,9 +85,21 @@ type PropertyData = {
   slots: Slot[];
 };
 
-type Tab = "overview" | "details" | "slots" | "questions";
+type Tab = "overview" | "details" | "slots" | "questions" | "offers";
+
+type Offer = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  amountCzk: number | null;
+  financing: string | null;
+  message: string | null;
+  createdAt: string;
+};
 
 export type ListingStats = {
+  offers: number;
   slotsTotal: number;
   slotsFree: number;
   registrations: number;
@@ -106,11 +118,13 @@ export function PropertyEditor({
   initial,
   providers,
   stats,
+  offers = [],
 }: {
   tenantSlug: string;
   initial: PropertyData;
   providers: { id: string; name: string }[];
   stats?: ListingStats;
+  offers?: Offer[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(stats ? "overview" : "details");
@@ -345,6 +359,12 @@ export function PropertyEditor({
           icon="❓"
           label={`Otázky (${data.formQuestions.length})`}
         />
+        <TabButton
+          active={tab === "offers"}
+          onClick={() => setTab("offers")}
+          icon="💰"
+          label={`Nabídky (${offers.length})`}
+        />
       </nav>
 
       {msg && (
@@ -362,6 +382,19 @@ export function PropertyEditor({
       {tab === "overview" && stats && (
         <section className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => setTab("offers")}
+              className="text-left"
+            >
+              <StatCard
+                icon="💰"
+                value={stats.offers}
+                label="Cenových nabídek"
+                hint="klepnutím zobrazíte"
+                color="green"
+              />
+            </button>
             <StatCard
               icon="👥"
               value={stats.registrations}
@@ -431,6 +464,72 @@ export function PropertyEditor({
             = termíny v minulosti, které nebyly zrušeny. Unikátních klientů:{" "}
             <strong>{stats.uniqueClients}</strong>.
           </p>
+        </section>
+      )}
+
+      {tab === "offers" && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="font-semibold">💰 Cenové nabídky ({offers.length})</h3>
+            <a
+              href={`/${tenantSlug}/p/${data.slug}/nabidka`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-brand-700 hover:underline"
+            >
+              Otevřít nabídkový formulář ↗
+            </a>
+          </div>
+          {offers.length === 0 ? (
+            <div className="card text-center text-slate-500 py-10">
+              <div className="text-4xl mb-2">💰</div>
+              Zatím žádné nabídky. Odkaz na formulář je v e-mailech po prohlídce
+              (proměnná <code>{"{{offer_form_url}}"}</code>) nebo ho můžete
+              sdílet sám.
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {offers
+                .slice()
+                .sort((a, b) => (b.amountCzk ?? 0) - (a.amountCzk ?? 0))
+                .map((o) => (
+                  <li key={o.id} className="card p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-semibold">{o.name}</div>
+                        <div className="text-sm text-slate-500">
+                          <a href={`tel:${o.phone}`} className="text-brand-700">
+                            {o.phone}
+                          </a>{" "}
+                          ·{" "}
+                          <a href={`mailto:${o.email}`} className="text-brand-700">
+                            {o.email}
+                          </a>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-lg font-bold text-green-700">
+                          {o.amountCzk
+                            ? `${new Intl.NumberFormat("cs-CZ").format(o.amountCzk)} Kč`
+                            : "—"}
+                        </div>
+                        {o.financing && (
+                          <div className="text-xs text-slate-500">{o.financing}</div>
+                        )}
+                      </div>
+                    </div>
+                    {o.message && (
+                      <p className="text-sm text-slate-600 mt-2 pt-2 border-t border-slate-100">
+                        {o.message}
+                      </p>
+                    )}
+                    <div className="text-xs text-slate-400 mt-2">
+                      {czDateTimeLong(new Date(o.createdAt))}
+                    </div>
+                  </li>
+                ))}
+            </ul>
+          )}
         </section>
       )}
 

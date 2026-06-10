@@ -56,7 +56,22 @@ export default async function PropertyDetailPage({
         where: { bookingId: { in: bookingIds }, channel: "email", status: "sent" },
       })
     : 0;
+  const offerRecords = await prisma.offer.findMany({
+    where: { listingId: listing.id },
+    orderBy: { createdAt: "desc" },
+  });
+  const offers = offerRecords.map((o) => ({
+    id: o.id,
+    name: o.name,
+    email: o.email,
+    phone: o.phone,
+    amountCzk: o.amountCzk,
+    financing: o.financing,
+    message: o.message,
+    createdAt: o.createdAt.toISOString(),
+  }));
   const stats = {
+    offers: offerRecords.length,
     slotsTotal: listing.slots.length,
     slotsFree: listing.slots.filter(
       (s) => !s.booking && s.startsAt.getTime() > now.getTime(),
@@ -115,6 +130,7 @@ export default async function PropertyDetailPage({
     <PropertyEditor
       tenantSlug={tenant?.slug ?? ""}
       stats={stats}
+      offers={offers}
       initial={{
         id: listing.id,
         slug: listing.slug,

@@ -99,6 +99,9 @@ export async function processNotifications(): Promise<{
       const manageUrl = booking.confirmationToken
         ? `${baseUrl}/booking/manage/${booking.confirmationToken}`
         : "";
+      const builtInOfferUrl = booking.listing
+        ? `${baseUrl}/${booking.tenant.slug}/p/${booking.listing.slug}/nabidka`
+        : "";
 
       const businessPhone = booking.tenant.ownerPhone ?? "";
       const vars: Vars = {
@@ -122,7 +125,9 @@ export async function processNotifications(): Promise<{
         documents_url: booking.listing?.documentsUrl ?? "",
         virtual_tour_url: booking.listing?.virtualTourUrl ?? "",
         property_web_url: booking.listing?.propertyWebUrl ?? "",
-        offer_form_url: booking.listing?.offerFormUrl ?? "",
+        // Vestavěný nabídkový formulář; pokud má vlastník externí, použije se ten.
+        offer_url: builtInOfferUrl,
+        offer_form_url: booking.listing?.offerFormUrl || builtInOfferUrl,
       };
 
       try {

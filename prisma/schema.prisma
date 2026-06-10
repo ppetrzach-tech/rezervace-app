@@ -43,6 +43,7 @@ model Tenant {
   clients           Client[]
   eventListings     EventListing[]
   notificationRules NotificationRule[]
+  offers            Offer[]
 }
 
 // Uživatel admin panelu (vlastník nebo zaměstnanec firmy)
@@ -230,9 +231,30 @@ model EventListing {
 
   slots           EventSlot[]
   bookings        Booking[]
+  offers          Offer[]
 
   @@unique([tenantId, slug])
   @@index([tenantId])
+}
+
+// Cenová nabídka od klienta na nemovitost (nabídkový formulář)
+model Offer {
+  id         String        @id @default(cuid())
+  tenantId   String
+  tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  listingId  String?
+  listing    EventListing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  name       String
+  email      String
+  phone      String
+  amountCzk  Int? // nabídková cena v Kč
+  financing  String? // "hotovost" | "hypotéka" | "kombinace" | jiné
+  message    String?
+  status     String        @default("new") // "new" | "accepted" | "rejected"
+  createdAt  DateTime      @default(now())
+
+  @@index([tenantId])
+  @@index([listingId])
 }
 
 // Ručně přidaný slot v rámci nemovitosti

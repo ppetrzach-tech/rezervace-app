@@ -84,7 +84,8 @@ export async function POST(
     documents_url: "https://drive.google.com/ukazka-slozka",
     virtual_tour_url: "https://my.matterport.com/ukazka",
     property_web_url: "https://www.sreality.cz/ukazka",
-    offer_form_url: "https://forms.gle/ukazka",
+    offer_form_url: `${baseUrl}/${tenant.slug}/p/ukazka/nabidka`,
+    offer_url: `${baseUrl}/${tenant.slug}/p/ukazka/nabidka`,
   };
 
   const subject =
