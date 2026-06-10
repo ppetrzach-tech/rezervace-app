@@ -140,10 +140,12 @@ export async function createCalendarEvent(
     location: input.location,
     start: { dateTime: input.startsAt.toISOString(), timeZone: tz },
     end: { dateTime: input.endsAt.toISOString(), timeZone: tz },
-    attendees: input.attendees,
-    // Po vytvoření zaslat pozvánky účastníkům:
-    // (Service Account ji NEMŮŽE poslat — vyžaduje domain-wide delegation.
-    //  Pro běžné nasazení necháme false a klient dostává pozvánku z naší aplikace přes Resend.)
+    // POZOR: účastníky (attendees) ZÁMĚRNĚ neposíláme.
+    // Service Account bez domain-wide delegation nesmí přidávat účastníky —
+    // Google by jinak CELÉ vytvoření události odmítl chybou
+    // "Service accounts cannot invite attendees...". Údaje o klientovi
+    // (jméno, e-mail, telefon) jsou součástí `description`, a potvrzení
+    // klientovi posílá aplikace e-mailem (Ecomail), takže nic nechybí.
     guestsCanInviteOthers: false,
     guestsCanSeeOtherGuests: false,
   };
