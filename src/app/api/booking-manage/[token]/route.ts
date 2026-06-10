@@ -5,7 +5,7 @@ import { sendEmail } from "@/lib/email-provider";
 import { escapeHtml } from "@/lib/email";
 import { markdownishToHtml } from "@/lib/email-format";
 import { deleteCalendarEvent } from "@/lib/google-calendar";
-import { formalGreeting } from "@/lib/czech-name";
+import { formalGreeting, gendered } from "@/lib/czech-name";
 import { czDateTimeLong } from "@/lib/datetime";
 import { PUBLIC_BASE_URL } from "@/lib/base-url";
 
@@ -89,6 +89,9 @@ export async function POST(
   const serviceName = booking.listing?.title || booking.service.name;
   const dateStr = czDateTimeLong(booking.startsAt);
   const greeting = formalGreeting(booking.client.name);
+  const chtel = gendered(booking.client.name, "chtěl", "chtěla");
+  const vitan = gendered(booking.client.name, "vítán", "vítána");
+  const potreboval = gendered(booking.client.name, "potřeboval", "potřebovala");
   const phone = booking.provider.phone || booking.tenant.ownerPhone || "";
   const replyTo = booking.tenant.replyToEmail || booking.tenant.ownerEmail || undefined;
 
@@ -114,7 +117,7 @@ ${booking.provider.name}${phone ? `\nTel.: ${phone}` : ""}`;
 
 Váš termín **${serviceName}** (${dateStr}) byl zrušen.
 
-Pokud byste si chtěli v budoucnu vybrat nový termín, jste vítáni:
+Pokud byste si ${chtel} v budoucnu vybrat nový termín, jste ${vitan}:
 [📅 Vybrat termín](${propertyUrl})
 
 Přeji hezký den,
@@ -125,7 +128,7 @@ ${booking.provider.name}${phone ? `\nTel.: ${phone}` : ""}`;
 
 děkuji Vám za Váš čas a zájem. Mrzí mě, že to tentokrát nevyšlo.
 
-Pokud byste cokoliv potřebovali do budoucna, neváhejte se na mě obrátit.
+Pokud byste cokoliv ${potreboval} do budoucna, neváhejte se na mě obrátit.
 
 Přeji Vám hezký den,
 ${booking.provider.name}${phone ? `\nTel.: ${phone}` : ""}`;

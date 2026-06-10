@@ -1,7 +1,7 @@
 import { sendEmail, type SendEmailResult } from "./email-provider";
 import { escapeHtml } from "./email";
 import { markdownishToHtml } from "./email-format";
-import { formalGreeting } from "./czech-name";
+import { formalGreeting, gendered } from "./czech-name";
 import { czDateTimeLong } from "./datetime";
 import { PUBLIC_BASE_URL } from "./base-url";
 
@@ -31,6 +31,7 @@ export async function sendBookingChangeEmailToClient(
   const serviceName = booking.listing?.title || booking.service.name;
   const dateStr = czDateTimeLong(booking.startsAt);
   const greeting = formalGreeting(booking.client.name);
+  const chtel = gendered(booking.client.name, "chtěl", "chtěla");
   const phone = booking.provider.phone || booking.tenant.ownerPhone || "";
   const replyTo =
     booking.tenant.replyToEmail || booking.tenant.ownerEmail || undefined;
@@ -59,7 +60,7 @@ ${booking.provider.name}${phone ? `\nTel.: ${phone}` : ""}`;
 
 Váš termín **${serviceName}** (${dateStr}) byl zrušen.
 
-Pokud byste si chtěl/a vybrat nový termín, budu rád:
+Pokud byste si ${chtel} vybrat nový termín, budu rád:
 [📅 Vybrat termín](${propertyUrl})
 
 V případě dotazů mi prosím napište nebo zavolejte.

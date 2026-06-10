@@ -106,3 +106,15 @@ export function formalGreeting(fullName: string): string {
   const voc = vocativeFirstName(fullName);
   return voc ? `Dobrý den, ${voc}` : "Dobrý den";
 }
+
+/**
+ * Vrátí mužský nebo ženský tvar slova podle pohlaví klienta.
+ * Např. gendered(jmeno, "chtěl", "chtěla") nebo gendered(jmeno, "vítán", "vítána").
+ */
+export function gendered(
+  fullName: string,
+  masculine: string,
+  feminine: string,
+): string {
+  return isFemaleName(fullName) ? feminine : masculine;
+}
