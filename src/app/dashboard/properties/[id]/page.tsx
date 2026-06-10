@@ -35,6 +35,43 @@ export default async function PropertyDetailPage({
     orderBy: { name: "asc" },
   });
 
+  // === Přehled (statistiky) — počítáno z existujících dat ===
+  const allBookings = await prisma.booking.findMany({
+    where: { listingId: listing.id },
+    select: {
+      id: true,
+      status: true,
+      confirmedByClientAt: true,
+      startsAt: true,
+      endsAt: true,
+      clientResponse: true,
+      clientId: true,
+    },
+  });
+  const now = new Date();
+  const active = allBookings.filter((b) => b.status !== "cancelled");
+  const bookingIds = allBookings.map((b) => b.id);
+  const emailsSent = bookingIds.length
+    ? await prisma.notificationLog.count({
+        where: { bookingId: { in: bookingIds }, channel: "email", status: "sent" },
+      })
+    : 0;
+  const stats = {
+    slotsTotal: listing.slots.length,
+    slotsFree: listing.slots.filter(
+      (s) => !s.booking && s.startsAt.getTime() > now.getTime(),
+    ).length,
+    registrations: allBookings.length,
+    upcoming: active.filter((b) => b.endsAt.getTime() >= now.getTime()).length,
+    completed: active.filter((b) => b.endsAt.getTime() < now.getTime()).length,
+    confirmed: active.filter((b) => b.confirmedByClientAt).length,
+    cancelled: allBookings.filter((b) => b.status === "cancelled").length,
+    declined: allBookings.filter((b) => b.clientResponse === "decline").length,
+    rescheduled: allBookings.filter((b) => b.clientResponse === "reschedule").length,
+    emailsSent,
+    uniqueClients: new Set(allBookings.map((b) => b.clientId)).size,
+  };
+
   // formQuestions je JSON; přetypujeme
   type QType =
     | "text"
@@ -77,6 +114,7 @@ export default async function PropertyDetailPage({
   return (
     <PropertyEditor
       tenantSlug={tenant?.slug ?? ""}
+      stats={stats}
       initial={{
         id: listing.id,
         slug: listing.slug,

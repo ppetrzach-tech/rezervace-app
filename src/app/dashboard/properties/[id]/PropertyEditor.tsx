@@ -85,19 +85,35 @@ type PropertyData = {
   slots: Slot[];
 };
 
-type Tab = "details" | "slots" | "questions";
+type Tab = "overview" | "details" | "slots" | "questions";
+
+export type ListingStats = {
+  slotsTotal: number;
+  slotsFree: number;
+  registrations: number;
+  upcoming: number;
+  completed: number;
+  confirmed: number;
+  cancelled: number;
+  declined: number;
+  rescheduled: number;
+  emailsSent: number;
+  uniqueClients: number;
+};
 
 export function PropertyEditor({
   tenantSlug,
   initial,
   providers,
+  stats,
 }: {
   tenantSlug: string;
   initial: PropertyData;
   providers: { id: string; name: string }[];
+  stats?: ListingStats;
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("details");
+  const [tab, setTab] = useState<Tab>(stats ? "overview" : "details");
   const [data, setData] = useState<PropertyData>(initial);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -302,7 +318,15 @@ export function PropertyEditor({
       </div>
 
       {/* Tabs */}
-      <nav className="border-b border-slate-200 flex gap-1">
+      <nav className="border-b border-slate-200 flex gap-1 overflow-x-auto">
+        {stats && (
+          <TabButton
+            active={tab === "overview"}
+            onClick={() => setTab("overview")}
+            icon="📊"
+            label="Přehled"
+          />
+        )}
         <TabButton
           active={tab === "details"}
           onClick={() => setTab("details")}
@@ -333,6 +357,81 @@ export function PropertyEditor({
         >
           {msg.text}
         </div>
+      )}
+
+      {tab === "overview" && stats && (
+        <section className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <StatCard
+              icon="👥"
+              value={stats.registrations}
+              label="Přihlášených celkem"
+              hint="kolik lidí si rezervovalo termín"
+              color="blue"
+            />
+            <StatCard
+              icon="✅"
+              value={stats.completed}
+              label="Prohlídek proběhlo"
+              hint="termíny, které už se uskutečnily"
+              color="green"
+            />
+            <StatCard
+              icon="📆"
+              value={stats.upcoming}
+              label="Nadcházejících"
+              hint="domluvené budoucí prohlídky"
+              color="indigo"
+            />
+            <StatCard
+              icon="✔️"
+              value={stats.confirmed}
+              label="Potvrzeno klientem"
+              hint="klient kliknul na „Potvrdit termín“"
+              color="teal"
+            />
+            <StatCard
+              icon="📧"
+              value={stats.emailsSent}
+              label="Odeslaných e-mailů"
+              hint="potvrzení, připomínky a follow-upy"
+              color="purple"
+            />
+            <StatCard
+              icon="🗓️"
+              value={`${stats.slotsFree}/${stats.slotsTotal}`}
+              label="Volných termínů"
+              hint="volné / celkem vypsané sloty"
+              color="amber"
+            />
+            <StatCard
+              icon="🔄"
+              value={stats.rescheduled}
+              label="Přeplánování"
+              hint="klient si chtěl změnit termín"
+              color="orange"
+            />
+            <StatCard
+              icon="🚫"
+              value={stats.declined}
+              label="Bez zájmu"
+              hint="klient napsal, že nemá zájem"
+              color="pink"
+            />
+            <StatCard
+              icon="❌"
+              value={stats.cancelled}
+              label="Zrušených"
+              hint="zrušené termíny (klient i vy)"
+              color="blue"
+            />
+          </div>
+          <p className="text-xs text-slate-500">
+            Počítáno z reálných rezervací této nemovitosti. „Prohlídek proběhlo“
+            = termíny v minulosti, které nebyly zrušeny. Unikátních klientů:{" "}
+            <strong>{stats.uniqueClients}</strong>.
+          </p>
+        </section>
       )}
 
       {tab === "details" && (
@@ -736,6 +835,30 @@ function TabButton({
       <span className="mr-1">{icon}</span>
       {label}
     </button>
+  );
+}
+
+function StatCard({
+  icon,
+  value,
+  label,
+  hint,
+  color,
+}: {
+  icon: string;
+  value: number | string;
+  label: string;
+  hint?: string;
+  color: string;
+}) {
+  const c = COLOR_CLASSES[color] ?? COLOR_CLASSES.blue;
+  return (
+    <div className={`rounded-xl border ${c.border} ${c.bg} p-4`}>
+      <div className="text-2xl">{icon}</div>
+      <div className={`text-3xl font-bold mt-1 ${c.text}`}>{value}</div>
+      <div className="text-sm font-medium text-slate-700 mt-0.5">{label}</div>
+      {hint && <div className="text-xs text-slate-500 mt-0.5">{hint}</div>}
+    </div>
   );
 }
 
