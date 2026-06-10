@@ -64,7 +64,7 @@ export async function sendOfferConfirmationToClient(
     <div style="color:#6b7280;font-size:13px;">${escapeHtml(d.tenantName)}</div>
     <h2 style="color:#1d4ed8;margin-top:4px;">Děkuji za Vaši nabídku</h2>
     <p>${escapeHtml(greeting)},</p>
-    <p>děkuji za Vaši cenovou nabídku na <strong>${escapeHtml(d.listingTitle)}</strong>. Eviduji ji a co nejdříve se Vám ozvu.</p>
+    <p>děkuji za Vaši cenovou nabídku. Eviduji ji a co nejdříve se Vám ozvu.</p>
     <table style="width:100%;border-collapse:collapse;margin:12px 0;">
       <tr><td style="padding:6px 0;color:#6b7280;width:140px;">Nabízená cena:</td><td><strong>${fmtAmount(d.amountCzk)}</strong></td></tr>
       ${d.financing ? `<tr><td style="padding:6px 0;color:#6b7280;">Financování:</td><td>${escapeHtml(d.financing)}</td></tr>` : ""}

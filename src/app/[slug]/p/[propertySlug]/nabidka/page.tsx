@@ -67,10 +67,9 @@ export default async function OfferPage({
                 <span>💰</span>
                 <span>Cenová nabídka</span>
               </div>
-              <div className="text-sm opacity-95 mt-1">{listing.title}</div>
-              {listing.address && (
-                <div className="text-xs opacity-90 mt-0.5">📍 {listing.address}</div>
-              )}
+              <div className="text-sm opacity-95 mt-1">
+                {listing.address ? `📍 ${listing.address}` : listing.title}
+              </div>
             </div>
           </div>
 

@@ -7,11 +7,10 @@ const FINANCING = ["Hotovost", "Hypotéka", "Kombinace", "Zatím nevím"];
 export function OfferForm({
   tenantSlug,
   listingSlug,
-  listingTitle,
 }: {
   tenantSlug: string;
   listingSlug: string;
-  listingTitle: string;
+  listingTitle?: string;
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -90,8 +89,8 @@ export function OfferForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       <p className="text-sm text-slate-600">
-        Máte zájem o <strong>{listingTitle}</strong>? Napište cenu, kterou jste
-        připraveni za nemovitost nabídnout — co nejdříve se Vám ozvu.
+        Napište prosím cenu, kterou jste za tuto nemovitost připraveni
+        nabídnout. Co nejdříve se Vám ozvu.
       </p>
 
       <div>
