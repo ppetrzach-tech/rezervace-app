@@ -85,13 +85,18 @@ export function SettingsForm({ initial }: { initial: Settings }) {
           obrázek (PNG/JPG).
         </p>
         {data.logoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={data.logoUrl}
-            alt="Náhled loga"
-            className="h-12 object-contain mt-2 border border-slate-100 rounded bg-white p-1"
-          />
+          <div className="mt-2 rounded-lg bg-gradient-to-br from-slate-700 to-slate-900 p-3 flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={data.logoUrl}
+              alt="Náhled loga"
+              className="h-12 object-contain"
+            />
+          </div>
         )}
+        <p className="text-xs text-slate-400 mt-1">
+          Náhled na tmavém pozadí — bílé logo se zobrazí na barevném pruhu.
+        </p>
       </div>
       <div>
         <label className="label">📞 Telefon do emailů</label>

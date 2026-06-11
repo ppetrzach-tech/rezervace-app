@@ -42,9 +42,9 @@ export default async function OfferPage({
       />
       <div className="max-w-lg mx-auto">
         <div className="rounded-3xl overflow-hidden shadow-lg border border-slate-200 bg-white">
-          {/* Logo firmy */}
+          {/* Logo firmy — na barevném pruhu, ať vynikne i bílé logo */}
           {tenant.logoUrl && (
-            <div className="bg-white px-6 pt-5 pb-2 flex justify-center">
+            <div className="bg-gradient-to-br from-brand-600 to-brand-700 px-6 py-5 flex justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={tenant.logoUrl}
