@@ -9,6 +9,7 @@ type Settings = {
   tagline: string;
   primaryColor: string;
   ownerPhone: string;
+  logoUrl: string;
 };
 
 const COLOR_PRESETS = [
@@ -70,6 +71,27 @@ export function SettingsForm({ initial }: { initial: Settings }) {
           value={data.tagline}
           onChange={(e) => setData({ ...data, tagline: e.target.value })}
         />
+      </div>
+      <div>
+        <label className="label">🖼️ Logo (URL obrázku)</label>
+        <input
+          className="input"
+          placeholder="https://…/logo.png"
+          value={data.logoUrl}
+          onChange={(e) => setData({ ...data, logoUrl: e.target.value })}
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          Zobrazí se nahoře na nabídkovém formuláři. Vložte přímý odkaz na
+          obrázek (PNG/JPG).
+        </p>
+        {data.logoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={data.logoUrl}
+            alt="Náhled loga"
+            className="h-12 object-contain mt-2 border border-slate-100 rounded bg-white p-1"
+          />
+        )}
       </div>
       <div>
         <label className="label">📞 Telefon do emailů</label>

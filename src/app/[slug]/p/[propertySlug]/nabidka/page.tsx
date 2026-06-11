@@ -42,6 +42,17 @@ export default async function OfferPage({
       />
       <div className="max-w-lg mx-auto">
         <div className="rounded-3xl overflow-hidden shadow-lg border border-slate-200 bg-white">
+          {/* Logo firmy */}
+          {tenant.logoUrl && (
+            <div className="bg-white px-6 pt-5 pb-2 flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={tenant.logoUrl}
+                alt={tenant.name}
+                className="h-14 object-contain"
+              />
+            </div>
+          )}
           {/* Barevný hero */}
           <div className="relative">
             {listing.imageUrl ? (
@@ -64,8 +75,8 @@ export default async function OfferPage({
                 {tenant.name}
               </div>
               <div className="inline-flex items-center gap-2 text-2xl font-bold mt-1">
-                <span>💰</span>
-                <span>Cenová nabídka</span>
+                <span>📋</span>
+                <span>Nabídkový formulář</span>
               </div>
               <div className="text-sm opacity-95 mt-1">
                 {listing.address ? `📍 ${listing.address}` : listing.title}

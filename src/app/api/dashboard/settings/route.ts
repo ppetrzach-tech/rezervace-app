@@ -11,6 +11,7 @@ const schema = z.object({
   tagline: z.string().max(200).optional().default(""),
   primaryColor: z.string().regex(/^[0-9a-fA-F]{6}$/),
   ownerPhone: z.string().max(40).optional().default(""),
+  logoUrl: z.string().max(1000).optional().default(""),
 });
 
 export async function PATCH(req: NextRequest) {
@@ -56,6 +57,7 @@ export async function PATCH(req: NextRequest) {
       tagline: data.tagline || null,
       primaryColor: data.primaryColor.toLowerCase(),
       ownerPhone: data.ownerPhone || null,
+      logoUrl: data.logoUrl?.trim() || null,
     },
   });
 

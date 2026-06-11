@@ -31,6 +31,7 @@ export default async function SettingsPage() {
           tagline: tenant.tagline ?? "",
           primaryColor: tenant.primaryColor,
           ownerPhone: tenant.ownerPhone ?? "",
+          logoUrl: tenant.logoUrl ?? "",
         }}
       />
     </div>

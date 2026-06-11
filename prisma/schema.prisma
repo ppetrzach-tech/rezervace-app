@@ -17,6 +17,7 @@ model Tenant {
   name         String
   tagline      String?
   primaryColor String   @default("2563eb")
+  logoUrl      String?  // URL loga firmy (zobrazí se na veřejných stránkách)
   active       Boolean  @default(true)
 
   // Email vlastníka pro notifikace o nových rezervacích (může být jiný než login email)

@@ -66,7 +66,9 @@ export async function POST(req: NextRequest) {
     ownerEmail: tenant.ownerEmail,
     ownerPhone: tenant.ownerPhone,
     replyToEmail: tenant.replyToEmail,
-    listingTitle: listing?.title ?? tenant.name,
+    // V e-mailech používáme ADRESU jako čistý identifikátor nemovitosti
+    // (název události může být dlouhý/nehodící se). Fallback na název / firmu.
+    listingTitle: listing?.address || listing?.title || tenant.name,
     client: { name: d.name, email: d.email, phone: d.phone },
     amountCzk: d.amountCzk ?? null,
     financing: d.financing || null,

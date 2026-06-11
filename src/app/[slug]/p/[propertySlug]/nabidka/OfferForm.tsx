@@ -88,9 +88,11 @@ export function OfferForm({
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <p className="text-sm text-slate-600">
-        Napište prosím cenu, kterou jste za tuto nemovitost připraveni
-        nabídnout. Co nejdříve se Vám ozvu.
+      <p className="text-sm text-slate-600 leading-relaxed">
+        Právě se nacházíte na stránce, kde stačí vyplnit formulář a napsat zde
+        Vaši cenu, kterou jste připraveni investovat do své budoucí nemovitosti.
+        Vaše údaje nám potvrdí Váš seriózní zájem o tuto nabídku. Začněte svou
+        cestu k novému bydlení.
       </p>
 
       <div>
