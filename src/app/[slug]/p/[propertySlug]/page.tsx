@@ -4,6 +4,7 @@ import { cookies, headers } from "next/headers";
 import { getTenantBySlug } from "@/lib/tenant";
 import { prisma } from "@/lib/db";
 import { brandCssVariablesForColor } from "@/lib/colors";
+import { getBusyIntervals, isCalendarConfigured } from "@/lib/google-calendar";
 import { getLocaleFromString, t, LOCALES, type Locale } from "@/lib/i18n";
 import { LanguageSwitcher } from "../../LanguageSwitcher";
 import { PropertyBookingFlow } from "./PropertyBookingFlow";
@@ -35,13 +36,16 @@ export default async function PropertyPage({
   const tenant = await getTenantBySlug(params.slug);
   if (!tenant) notFound();
 
+  // Sloty se přestanou nabízet minimálně 5 hodin před začátkem prohlídky.
+  const minStart = new Date(Date.now() + 5 * 60 * 60 * 1000);
+
   const listing = await prisma.eventListing.findFirst({
     where: { tenantId: tenant.id, slug: params.propertySlug, active: true },
     include: {
-      provider: { select: { name: true, bio: true } },
+      provider: { select: { name: true, bio: true, photoUrl: true } },
       slots: {
         where: {
-          startsAt: { gte: new Date() },
+          startsAt: { gte: minStart },
           booking: null,
         },
         orderBy: { startsAt: "asc" },
@@ -49,6 +53,25 @@ export default async function PropertyPage({
     },
   });
   if (!listing) notFound();
+
+  // Blokace slotů, které se kryjí s událostí ve vlastníkově Google kalendáři.
+  let slots = listing.slots;
+  if (tenant.googleCalendarId && isCalendarConfigured() && slots.length > 0) {
+    try {
+      const busy = await getBusyIntervals(
+        tenant.googleCalendarId,
+        slots[0].startsAt,
+        slots[slots.length - 1].endsAt,
+      );
+      if (busy.length > 0) {
+        slots = slots.filter(
+          (s) => !busy.some((b) => s.startsAt < b.end && s.endsAt > b.start),
+        );
+      }
+    } catch {
+      /* při chybě kalendáře raději ukážeme všechny sloty */
+    }
+  }
 
   const formQuestions = Array.isArray(listing.formQuestions)
     ? (listing.formQuestions as unknown as Array<{
@@ -60,7 +83,7 @@ export default async function PropertyPage({
       }>)
     : [];
 
-  const totalSlots = listing.slots.length;
+  const totalSlots = slots.length;
 
   // Locale: cookie → Accept-Language → cs
   const cookieLocale = cookies().get("locale")?.value;
@@ -163,7 +186,7 @@ export default async function PropertyPage({
               durationMinutes: listing.durationMinutes,
               formQuestions,
             }}
-            slots={listing.slots.map((s) => ({
+            slots={slots.map((s) => ({
               id: s.id,
               startsAt: s.startsAt.toISOString(),
               endsAt: s.endsAt.toISOString(),
@@ -239,13 +262,22 @@ export default async function PropertyPage({
                 <span>{tr("booking.viewed_by")}</span>
               </h3>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center font-bold text-lg shrink-0">
-                  {listing.provider.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .slice(0, 2)
-                    .join("")}
-                </div>
+                {listing.provider.photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={listing.provider.photoUrl}
+                    alt={listing.provider.name}
+                    className="w-12 h-12 rounded-full object-cover shrink-0 border border-slate-200"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                    {listing.provider.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join("")}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <div className="font-medium">{listing.provider.name}</div>
                   {listing.provider.bio && (

@@ -171,6 +171,50 @@ export async function createCalendarEvent(
 }
 
 /**
+ * Vrátí obsazené (busy) intervaly z kalendáře v daném okně.
+ * Používá events.list (funguje s oprávněním calendar.events).
+ * Slouží k blokaci slotů, které se kryjí s událostí ve vlastníkově kalendáři.
+ */
+export async function getBusyIntervals(
+  calendarId: string,
+  from: Date,
+  to: Date,
+): Promise<{ start: Date; end: Date }[]> {
+  const token = await getAccessToken();
+  if (!token) return [];
+  const params = new URLSearchParams({
+    timeMin: from.toISOString(),
+    timeMax: to.toISOString(),
+    singleEvents: "true",
+    orderBy: "startTime",
+    maxResults: "250",
+  });
+  const res = await fetch(
+    `${API_BASE}/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!res.ok) return [];
+  const json = (await res.json()) as {
+    items?: {
+      status?: string;
+      transparency?: string;
+      start?: { dateTime?: string; date?: string };
+      end?: { dateTime?: string; date?: string };
+    }[];
+  };
+  const out: { start: Date; end: Date }[] = [];
+  for (const ev of json.items ?? []) {
+    if (ev.status === "cancelled") continue;
+    if (ev.transparency === "transparent") continue; // "volno" / nezabírá čas
+    const s = ev.start?.dateTime ?? ev.start?.date;
+    const e = ev.end?.dateTime ?? ev.end?.date;
+    if (!s || !e) continue;
+    out.push({ start: new Date(s), end: new Date(e) });
+  }
+  return out;
+}
+
+/**
  * Smaže událost (např. při zrušení rezervace).
  */
 export async function deleteCalendarEvent(

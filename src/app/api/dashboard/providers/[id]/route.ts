@@ -10,6 +10,7 @@ const schema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().max(40).optional().default(""),
   bio: z.string().max(500).optional().default(""),
+  photoUrl: z.string().max(1000).optional().default(""),
   active: z.boolean().default(true),
 });
 
@@ -48,6 +49,7 @@ export async function PATCH(
       email: data.email || null,
       phone: data.phone || null,
       bio: data.bio || null,
+      photoUrl: data.photoUrl?.trim() || null,
       active: data.active,
     },
   });

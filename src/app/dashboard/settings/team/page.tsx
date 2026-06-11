@@ -63,6 +63,7 @@ export default async function TeamAdmin() {
             email: p.email ?? "",
             phone: p.phone ?? "",
             bio: p.bio ?? "",
+            photoUrl: p.photoUrl ?? "",
             active: p.active,
           }))}
         />

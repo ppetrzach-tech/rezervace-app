@@ -9,6 +9,7 @@ type Provider = {
   email: string;
   phone: string;
   bio: string;
+  photoUrl: string;
   active: boolean;
 };
 
@@ -17,6 +18,7 @@ const empty: Omit<Provider, "id"> = {
   email: "",
   phone: "",
   bio: "",
+  photoUrl: "",
   active: true,
 };
 
@@ -203,6 +205,26 @@ function ProviderForm({
               value={data.bio}
               onChange={(e) => setData({ ...data, bio: e.target.value })}
             />
+          </div>
+          <div>
+            <label className="label">🖼️ Fotka (URL obrázku)</label>
+            <input
+              className="input"
+              placeholder="https://…/foto.jpg"
+              value={data.photoUrl}
+              onChange={(e) => setData({ ...data, photoUrl: e.target.value })}
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Zobrazí se v kolečku „Prohlídku vede" na veřejné stránce.
+            </p>
+            {data.photoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={data.photoUrl}
+                alt="Náhled"
+                className="w-14 h-14 rounded-full object-cover mt-2 border border-slate-200"
+              />
+            )}
           </div>
           <div>
             <label className="text-sm flex items-center gap-2">

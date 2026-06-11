@@ -72,6 +72,7 @@ model Provider {
   email        String?
   phone        String?
   bio          String?
+  photoUrl     String?  // URL fotky osoby (zobrazí se v kolečku u prohlídky)
   active       Boolean  @default(true)
   user         User?
   workingHours WorkingHour[]
