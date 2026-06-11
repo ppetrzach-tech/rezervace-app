@@ -267,7 +267,7 @@ export default async function PropertyPage({
                   <img
                     src={listing.provider.photoUrl}
                     alt={listing.provider.name}
-                    className="w-12 h-12 rounded-full object-cover shrink-0 border border-slate-200"
+                    className="w-16 h-20 rounded-xl object-cover object-top shrink-0 border border-slate-200 bg-slate-50"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center font-bold text-lg shrink-0">

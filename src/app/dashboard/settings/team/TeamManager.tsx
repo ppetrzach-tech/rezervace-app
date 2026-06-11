@@ -222,7 +222,7 @@ function ProviderForm({
               <img
                 src={data.photoUrl}
                 alt="Náhled"
-                className="w-14 h-14 rounded-full object-cover mt-2 border border-slate-200"
+                className="w-16 h-20 rounded-xl object-cover object-top mt-2 border border-slate-200 bg-slate-50"
               />
             )}
           </div>
