@@ -157,6 +157,7 @@ export async function POST(req: NextRequest) {
         bookingId: booking.id,
         ruleId: null,
         channel: "email",
+        label: "✅ Potvrzení rezervace",
         status: emailRes.ok ? "sent" : "failed",
         error: emailRes.error ?? null,
       },

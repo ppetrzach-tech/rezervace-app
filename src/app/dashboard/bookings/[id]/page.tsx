@@ -231,7 +231,9 @@ export default async function BookingDetailPage({
                   {n.channel === "email" ? "📧" : "📱"}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm">{ruleName(n.ruleId)}</div>
+                  <div className="font-medium text-sm">
+                    {n.label ?? ruleName(n.ruleId)}
+                  </div>
                   <div className="text-xs text-slate-500">
                     {czDateTimeLong(n.sentAt)}
                     {" · "}

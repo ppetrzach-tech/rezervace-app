@@ -83,6 +83,10 @@ export async function POST(
           bookingId: booking.id,
           ruleId: null,
           channel: "email",
+          label:
+            action === "reschedule"
+              ? "🔄 Přeplánování — e-mail klientovi"
+              : "❌ Zrušení — e-mail klientovi",
           status: r.ok ? "sent" : "failed",
           error: r.error ?? null,
         },

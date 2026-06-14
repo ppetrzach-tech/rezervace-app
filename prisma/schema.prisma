@@ -308,6 +308,7 @@ model NotificationLog {
   channel   String   // email | sms
   status    String   // sent | failed | skipped
   error     String?
+  label     String?  // čitelný popis (např. "Zrušení termínu") pro historii
   sentAt    DateTime @default(now())
   openedAt  DateTime? // kdy klient e-mail otevřel (tracking pixel)
 
