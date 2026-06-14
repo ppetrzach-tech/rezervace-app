@@ -27,6 +27,7 @@ type BookingForEmail = {
 export async function sendBookingChangeEmailToClient(
   booking: BookingForEmail,
   action: "cancel" | "reschedule",
+  trackingLogId?: string,
 ): Promise<SendEmailResult> {
   const serviceName = booking.listing?.title || booking.service.name;
   const dateStr = czDateTimeLong(booking.startsAt);
@@ -69,13 +70,17 @@ Přeji hezký den,
 ${booking.provider.name}${phone ? `\nTel.: ${phone}` : ""}`;
   }
 
+  const pixel = trackingLogId
+    ? `<img src="${PUBLIC_BASE_URL}/api/track/${trackingLogId}" width="1" height="1" alt="" style="display:none" />`
+    : "";
+
   return sendEmail({
     to: booking.client.email,
     subject,
     html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:24px;">
       <div style="color:#6b7280;font-size:13px;">${escapeHtml(booking.tenant.name)}</div>
       <div style="margin-top:8px;">${markdownishToHtml(body)}</div>
-    </div>`,
+    </div>${pixel}`,
     replyTo,
   });
 }

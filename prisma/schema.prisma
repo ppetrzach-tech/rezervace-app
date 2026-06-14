@@ -309,6 +309,7 @@ model NotificationLog {
   status    String   // sent | failed | skipped
   error     String?
   sentAt    DateTime @default(now())
+  openedAt  DateTime? // kdy klient e-mail otevřel (tracking pixel)
 
   @@index([bookingId])
   @@unique([bookingId, ruleId])

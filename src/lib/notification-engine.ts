@@ -1,4 +1,5 @@
 import { addMinutes } from "date-fns";
+import { randomUUID } from "crypto";
 import { prisma } from "./db";
 import { sendTemplatedEmail } from "./email";
 import { calendarButtonsHtml } from "./calendar-links";
@@ -186,6 +187,9 @@ export async function processNotifications(): Promise<{
               `;
             }
           }
+          // Předgenerované ID logu → tracking pixel pro zjištění otevření e-mailu
+          const logId = randomUUID();
+          bodyHtml += `<img src="${baseUrl}/api/track/${logId}" width="1" height="1" alt="" style="display:none" />`;
           const res = await sendTemplatedEmail({
             to: booking.client.email,
             subject: subject || `Připomínka — ${vars.service_name}`,
@@ -198,6 +202,7 @@ export async function processNotifications(): Promise<{
           else errors++;
           await prisma.notificationLog.create({
             data: {
+              id: logId,
               bookingId: booking.id,
               ruleId: rule.id,
               channel: "email",

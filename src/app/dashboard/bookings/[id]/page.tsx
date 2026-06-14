@@ -237,6 +237,11 @@ export default async function BookingDetailPage({
                     {" · "}
                     {n.channel === "email" ? "Email" : "SMS"}
                   </div>
+                  {n.openedAt && (
+                    <div className="text-xs text-green-600 mt-1">
+                      👁 otevřeno {czDayMonthTime(n.openedAt)}
+                    </div>
+                  )}
                   {n.error && (
                     <div className="text-xs text-red-600 mt-1">{n.error}</div>
                   )}

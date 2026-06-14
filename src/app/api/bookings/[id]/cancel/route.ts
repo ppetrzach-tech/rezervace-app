@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -72,11 +73,13 @@ export async function POST(
   // E-mail klientovi (zrušení / výzva k přeplánování)
   let clientEmailed = false;
   try {
-    const r = await sendBookingChangeEmailToClient(booking, action);
+    const logId = randomUUID();
+    const r = await sendBookingChangeEmailToClient(booking, action, logId);
     clientEmailed = r.ok;
     await prisma.notificationLog
       .create({
         data: {
+          id: logId,
           bookingId: booking.id,
           ruleId: null,
           channel: "email",
