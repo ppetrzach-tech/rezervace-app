@@ -147,6 +147,46 @@ export function PropertyEditor({
     (s) => new Date(s.startsAt).getTime() > Date.now() && !s.bookedBy,
   );
 
+  // Nadcházející vs. staré (proběhlé/zrušené) termíny pro přehledné zobrazení
+  const upcomingSlots = data.slots.filter(
+    (s) => new Date(s.startsAt).getTime() >= Date.now(),
+  );
+  const pastSlots = data.slots
+    .filter((s) => new Date(s.startsAt).getTime() < Date.now())
+    .sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+
+  const slotRow = (s: Slot) => {
+    const date = new Date(s.startsAt);
+    const isPast = date.getTime() < Date.now();
+    return (
+      <li
+        key={s.id}
+        className={`px-4 py-3 flex justify-between items-center ${
+          isPast ? "opacity-60" : ""
+        }`}
+      >
+        <div>
+          <div className="font-medium">{czDateTimeLong(date)}</div>
+          {s.bookedBy ? (
+            <div className="text-xs text-brand-700">✅ {s.bookedBy}</div>
+          ) : isPast ? (
+            <div className="text-xs text-slate-400">proběhlo / zrušeno</div>
+          ) : (
+            <div className="text-xs text-slate-500">volný</div>
+          )}
+        </div>
+        {s.id && !s.bookedBy && !isPast && (
+          <button
+            onClick={() => deleteSlot(s.id!)}
+            className="text-sm text-red-600 hover:underline"
+          >
+            Smazat
+          </button>
+        )}
+      </li>
+    );
+  };
+
   async function saveDetails() {
     setSaving(true);
     setMsg(null);
@@ -813,44 +853,31 @@ export function PropertyEditor({
               Žádné termíny. Přidejte první nahoře.
             </div>
           ) : (
-            <div className="card p-0 overflow-hidden">
-              <ul className="divide-y divide-slate-100">
-                {data.slots.map((s) => {
-                  const date = new Date(s.startsAt);
-                  const isPast = date.getTime() < Date.now();
-                  return (
-                    <li
-                      key={s.id}
-                      className={`px-4 py-3 flex justify-between items-center ${
-                        isPast ? "opacity-50" : ""
-                      }`}
-                    >
-                      <div>
-                        <div className="font-medium">
-                          {czDateTimeLong(date)}
-                        </div>
-                        {s.bookedBy ? (
-                          <div className="text-xs text-brand-700">
-                            ✅ {s.bookedBy}
-                          </div>
-                        ) : isPast ? (
-                          <div className="text-xs text-slate-400">proběhlo</div>
-                        ) : (
-                          <div className="text-xs text-slate-500">volný</div>
-                        )}
-                      </div>
-                      {s.id && !s.bookedBy && !isPast && (
-                        <button
-                          onClick={() => deleteSlot(s.id!)}
-                          className="text-sm text-red-600 hover:underline"
-                        >
-                          Smazat
-                        </button>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+            <div className="space-y-3">
+              {/* Nadcházející termíny */}
+              <div className="card p-0 overflow-hidden">
+                {upcomingSlots.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-sm text-slate-500">
+                    Žádné nadcházející termíny — přidejte nové nahoře.
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-slate-100">
+                    {upcomingSlots.map(slotRow)}
+                  </ul>
+                )}
+              </div>
+
+              {/* Staré termíny (proběhlé / zrušené) — schované v dropdownu */}
+              {pastSlots.length > 0 && (
+                <details className="card p-0 overflow-hidden">
+                  <summary className="px-4 py-3 cursor-pointer select-none text-sm font-medium text-slate-600 hover:bg-slate-50">
+                    🗂 Staré termíny (proběhlé / zrušené) — {pastSlots.length}
+                  </summary>
+                  <ul className="divide-y divide-slate-100 border-t border-slate-100">
+                    {pastSlots.map(slotRow)}
+                  </ul>
+                </details>
+              )}
             </div>
           )}
         </section>
