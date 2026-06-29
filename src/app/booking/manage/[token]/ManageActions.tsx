@@ -53,9 +53,11 @@ export function ManageActions({
   const [pending, setPending] = useState<Action | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ action: Action; propertyUrl: string } | null>(
-    null,
-  );
+  const [done, setDone] = useState<{
+    action: Action;
+    propertyUrl: string;
+    rescheduleUrl?: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function open(action: Action) {
@@ -89,7 +91,11 @@ export function ManageActions({
         setError(json.error ?? "Něco se nepovedlo.");
         return;
       }
-      setDone({ action: pending, propertyUrl: json.propertyUrl });
+      setDone({
+        action: pending,
+        propertyUrl: json.propertyUrl,
+        rescheduleUrl: json.rescheduleUrl,
+      });
       setPending(null);
     } catch (e) {
       setError(String(e));
@@ -105,9 +111,12 @@ export function ManageActions({
           <div className="text-4xl mb-3">📅</div>
           <h2 className="text-xl font-semibold mb-2">Termín zrušen</h2>
           <p className="text-slate-600 mb-5">
-            Vyberte si prosím nový termín, který vám vyhovuje.
+            Vyberte si nový termín — vaše údaje i odpovědi už máme, stačí kliknout.
           </p>
-          <a href={done.propertyUrl} className="btn-primary inline-block">
+          <a
+            href={done.rescheduleUrl || done.propertyUrl}
+            className="btn-primary inline-block"
+          >
             Vybrat nový termín
           </a>
         </div>

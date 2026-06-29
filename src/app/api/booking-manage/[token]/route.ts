@@ -62,6 +62,10 @@ export async function POST(
   const propertyUrl = booking.listing
     ? `${baseUrl}/${booking.tenant.slug}/p/${booking.listing.slug}`
     : `${baseUrl}/${booking.tenant.slug}`;
+  // Přeplánování bez opětovného vyplňování formuláře (přenese údaje + odpovědi)
+  const rescheduleUrl = booking.listing
+    ? `${baseUrl}/booking/reschedule/${booking.confirmationToken}`
+    : propertyUrl;
 
   // === Aktualizace rezervace podle akce ===
   const willCancel = action === "reschedule" || action === "cancel" || (action === "decline" && isFuture);
@@ -104,8 +108,8 @@ export async function POST(
 
 Váš termín **${serviceName}** (${dateStr}) byl zrušen.
 
-Nový termín si snadno vyberte zde:
-[📅 Vybrat nový termín](${propertyUrl})
+Nový termín si vyberte jediným kliknutím (údaje už máme, nemusíte nic vyplňovat):
+[📅 Vybrat nový termín](${rescheduleUrl})
 
 Kdyby cokoliv, ozvěte se mi.
 
@@ -177,5 +181,5 @@ ${booking.provider.name}${phone ? `\nTel.: ${phone}` : ""}`;
     }).catch(() => {});
   }
 
-  return NextResponse.json({ ok: true, action, propertyUrl });
+  return NextResponse.json({ ok: true, action, propertyUrl, rescheduleUrl });
 }
