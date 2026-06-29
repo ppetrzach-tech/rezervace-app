@@ -6,7 +6,12 @@ import { prisma } from "@/lib/db";
 
 const schema = z.object({
   token: z.string().min(10),
-  password: z.string().min(10).max(200),
+  password: z
+    .string()
+    .min(10)
+    .max(200)
+    .regex(/\p{L}/u)
+    .regex(/\d/),
 });
 
 export async function POST(req: NextRequest) {
@@ -19,7 +24,7 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Heslo musí mít alespoň 10 znaků." },
+      { error: "Heslo nesplňuje požadavky (min. 10 znaků, písmeno a číslo)." },
       { status: 400 },
     );
   }

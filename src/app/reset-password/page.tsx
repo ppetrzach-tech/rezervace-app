@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { PasswordChecklist, passwordValid } from "../PasswordChecklist";
 
 function ResetForm() {
   const router = useRouter();
@@ -16,8 +17,8 @@ function ResetForm() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (password.length < 10) {
-      setError("Heslo musí mít alespoň 10 znaků.");
+    if (!passwordValid(password)) {
+      setError("Heslo nesplňuje požadavky níže.");
       return;
     }
     if (password !== password2) {
@@ -78,6 +79,7 @@ function ResetForm() {
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="new-password"
         />
+        <PasswordChecklist value={password} />
       </div>
       <div>
         <label className="label">Heslo znovu</label>
@@ -92,7 +94,11 @@ function ResetForm() {
         />
       </div>
       {error && <p className="text-red-600 text-sm">{error}</p>}
-      <button type="submit" disabled={loading} className="btn-primary w-full">
+      <button
+        type="submit"
+        disabled={loading || !passwordValid(password) || password !== password2}
+        className="btn-primary w-full disabled:opacity-50"
+      >
         {loading ? "Ukládám…" : "Nastavit heslo"}
       </button>
     </form>

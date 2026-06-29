@@ -9,7 +9,12 @@ const schema = z.object({
   slug: z.string().min(2).max(50),
   name: z.string().min(2).max(120),
   email: z.string().email(),
-  password: z.string().min(10).max(200),
+  password: z
+    .string()
+    .min(10)
+    .max(200)
+    .regex(/\p{L}/u, "Heslo musí obsahovat písmeno")
+    .regex(/\d/, "Heslo musí obsahovat číslo"),
   inviteCode: z.string().min(1),
 });
 

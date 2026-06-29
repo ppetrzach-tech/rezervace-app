@@ -4,6 +4,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { PasswordChecklist, passwordValid } from "../PasswordChecklist";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -138,7 +139,7 @@ export default function SignupPage() {
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
-            <p className="text-xs text-slate-500 mt-1">Alespoň 10 znaků.</p>
+            <PasswordChecklist value={form.password} />
           </div>
           <div>
             <label className="label">Pozvánkový kód *</label>
@@ -153,7 +154,11 @@ export default function SignupPage() {
 
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
-          <button type="submit" disabled={loading} className="btn-primary w-full">
+          <button
+            type="submit"
+            disabled={loading || !passwordValid(form.password)}
+            className="btn-primary w-full disabled:opacity-50"
+          >
             {loading ? "Zakládám účet…" : "Vytvořit účet"}
           </button>
         </form>
