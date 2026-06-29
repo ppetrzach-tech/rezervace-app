@@ -62,6 +62,11 @@ export default function LoginPage() {
             {loading ? "Přihlašuji…" : "Přihlásit"}
           </button>
         </form>
+        <p className="text-sm text-center mt-3">
+          <Link href="/forgot-password" className="text-slate-500 hover:text-brand-700">
+            Zapomněli jste heslo?
+          </Link>
+        </p>
         <p className="text-sm text-slate-500 mt-6 text-center">
           Ještě nemáte účet?{" "}
           <Link href="/signup" className="text-brand-700 font-medium">

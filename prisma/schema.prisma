@@ -60,7 +60,40 @@ model User {
   provider     Provider? @relation(fields: [providerId], references: [id])
   createdAt    DateTime  @default(now())
 
+  // Zabezpečení účtu
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  loginDevices LoginDevice[]
+  resetTokens  PasswordResetToken[]
+
   @@index([tenantId])
+}
+
+// Známá zařízení (pro upozornění na přihlášení z nového zařízení)
+model LoginDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fingerprint String
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+
+  @@unique([userId, fingerprint])
+  @@index([userId])
+}
+
+// Tokeny pro reset hesla (samoobslužné „zapomněl jsem heslo")
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 // Poskytovatel (osoba, která má rezervace)

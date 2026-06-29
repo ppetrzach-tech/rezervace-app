@@ -9,7 +9,7 @@ const schema = z.object({
   slug: z.string().min(2).max(50),
   name: z.string().min(2).max(120),
   email: z.string().email(),
-  password: z.string().min(8).max(200),
+  password: z.string().min(10).max(200),
   inviteCode: z.string().min(1),
 });
 

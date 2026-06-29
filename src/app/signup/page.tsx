@@ -132,13 +132,13 @@ export default function SignupPage() {
             <input
               required
               type="password"
-              minLength={8}
+              minLength={10}
               className="input"
               autoComplete="new-password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
-            <p className="text-xs text-slate-500 mt-1">Alespoň 8 znaků.</p>
+            <p className="text-xs text-slate-500 mt-1">Alespoň 10 znaků.</p>
           </div>
           <div>
             <label className="label">Pozvánkový kód *</label>
