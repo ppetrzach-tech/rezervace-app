@@ -40,7 +40,7 @@ export function RescheduleButton({ bookingId }: { bookingId: string }) {
       disabled={busy}
       className="text-sm px-3 py-1.5 rounded-md border border-slate-200 text-slate-600 font-medium hover:border-brand-500 hover:text-brand-700 disabled:opacity-50"
     >
-      {busy ? "Přeplánovávám…" : "🔄 Přeplánovat"}
+      {busy ? "Odesílám…" : "🔄 Požádat klienta o přeplánování"}
     </button>
   );
 }

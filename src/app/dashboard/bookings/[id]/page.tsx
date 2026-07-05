@@ -7,6 +7,7 @@ import { czDateTimeLong, czDayMonthTime } from "@/lib/datetime";
 import { CancelButton } from "../../CancelButton";
 import { EmailingToggle } from "./EmailingToggle";
 import { RescheduleButton } from "./RescheduleButton";
+import { MoveBookingButton } from "./MoveBookingButton";
 import { canManage } from "@/lib/perms";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,22 @@ export default async function BookingDetailPage({
   ) {
     redirect("/dashboard/bookings");
   }
+
+  // Volné budoucí termíny stejné nemovitosti (pro přeplánování vlastníkem)
+  const moveSlots =
+    booking.listingId && booking.status !== "cancelled"
+      ? (
+          await prisma.eventSlot.findMany({
+            where: {
+              listingId: booking.listingId,
+              startsAt: { gte: new Date() },
+              booking: null,
+            },
+            orderBy: { startsAt: "asc" },
+            take: 60,
+          })
+        ).map((s) => ({ id: s.id, startsAt: s.startsAt.toISOString() }))
+      : [];
 
   // Pravidla pro hezké názvy logů
   const rules = await prisma.notificationRule.findMany({
@@ -182,6 +199,12 @@ export default async function BookingDetailPage({
             />
             {booking.status !== "cancelled" && (
               <>
+                {booking.listingId && (
+                  <MoveBookingButton
+                    bookingId={booking.id}
+                    slots={moveSlots}
+                  />
+                )}
                 <RescheduleButton bookingId={booking.id} />
                 <CancelButton bookingId={booking.id} />
               </>
