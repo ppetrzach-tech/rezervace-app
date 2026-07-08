@@ -49,6 +49,26 @@ export function isFemaleName(fullName: string): boolean {
   // Příjmení -ová / -á → žena (velmi spolehlivé)
   if (/ová$|á$/.test(last)) return true;
 
+  // Běžná ženská jména končící na souhlásku (jinak by spadla do mužských pravidel)
+  const femaleConsonantNames = [
+    "dagmar",
+    "miriam",
+    "ester",
+    "karin",
+    "ingrid",
+    "nikol",
+    "doris",
+    "rút",
+    "ruth",
+    "sarah",
+    "karmen",
+    "carmen",
+    "vivien",
+    "kristin",
+    "karolin",
+  ];
+  if (femaleConsonantNames.includes(first)) return true;
+
   // Křestní jméno končící na -a (kromě výjimek jako "Honza", "Saša" = muž)
   const maleAExceptions = ["honza", "saša", "sasa", "nikita", "kuba", "ilja", "nikola"];
   if (/a$/.test(first) && !maleAExceptions.includes(first)) return true;
