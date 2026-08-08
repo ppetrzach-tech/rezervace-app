@@ -30,6 +30,7 @@ const looseUrl = z.string().max(1000).optional().default("");
 const schema = z.object({
   slug: z.string().min(1).max(60),
   title: z.string().min(1).max(200),
+  emailName: z.string().max(200).optional().default(""),
   address: z.string().max(300).optional().default(""),
   description: z.string().max(2000).optional().default(""),
   imageUrl: looseUrl,
@@ -107,6 +108,7 @@ export async function PATCH(
     data: {
       slug,
       title: data.title,
+      emailName: data.emailName.trim() || null,
       description: data.description || null,
       address: data.address || null,
       imageUrl: normalizeUrl(data.imageUrl) || null,

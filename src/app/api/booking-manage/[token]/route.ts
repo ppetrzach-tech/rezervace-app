@@ -90,7 +90,10 @@ export async function POST(
     );
   }
 
-  const serviceName = booking.listing?.title || booking.service.name;
+  const serviceName =
+    booking.listing?.emailName ||
+    booking.listing?.title ||
+    booking.service.name;
   const dateStr = czDateTimeLong(booking.startsAt);
   const greeting = formalGreeting(booking.client.name);
   const chtel = gendered(booking.client.name, "chtěl", "chtěla");

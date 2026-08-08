@@ -124,7 +124,7 @@ export async function POST(
   const emailRes = await sendBookingConfirmationEmail({
     clientName: original.client.name,
     clientEmail: original.client.email,
-    serviceName: listing.title,
+    serviceName: listing.emailName || listing.title,
     providerName: tenant.name,
     startsAt: slot.startsAt,
     durationMinutes: listing.durationMinutes,
@@ -198,7 +198,7 @@ export async function POST(
     await sendOwnerNewBookingEmail({
       ownerEmail: tenant.ownerEmail,
       businessName: tenant.name,
-      serviceName: listing.title,
+      serviceName: listing.emailName || listing.title,
       providerName: tenant.name,
       clientName: original.client.name,
       clientEmail: original.client.email,

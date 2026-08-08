@@ -246,6 +246,10 @@ model EventListing {
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   slug            String   // /[tenantSlug]/p/[slug]
   title           String
+  // Krátký název pro použití v TEXTECH E-MAILŮ (např. „2+1 Dvořákova").
+  // Když je prázdný, e-maily používají `title` – tj. chová se jako dřív.
+  // Nemá vliv na veřejnou stránku, seznam, URL ani kalendář (tam je vždy `title`).
+  emailName       String?
   description     String?
   address         String?
   imageUrl        String?  // hlavní fotka — URL na obrázek

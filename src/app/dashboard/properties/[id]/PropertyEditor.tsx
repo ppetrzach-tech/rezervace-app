@@ -71,6 +71,7 @@ type PropertyData = {
   id: string;
   slug: string;
   title: string;
+  emailName: string;
   description: string;
   address: string;
   imageUrl: string;
@@ -197,6 +198,7 @@ export function PropertyEditor({
         body: JSON.stringify({
           slug: data.slug,
           title: data.title,
+          emailName: data.emailName,
           description: data.description,
           address: data.address,
           imageUrl: data.imageUrl,
@@ -583,6 +585,27 @@ export function PropertyEditor({
               onChange={(e) => setData({ ...data, title: e.target.value })}
               placeholder="např. Byt 3+kk Praha 7, Letná"
             />
+            <p className="text-xs text-slate-500 mt-1">
+              Zobrazuje se klientům na veřejné stránce, v seznamu i v odkazu (URL).
+            </p>
+          </div>
+          <div>
+            <label className="label">Název v e‑mailech (nepovinné)</label>
+            <input
+              className="input"
+              value={data.emailName}
+              onChange={(e) => setData({ ...data, emailName: e.target.value })}
+              placeholder="např. 2+1 Dvořákova"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Krátký tvar, který se dosadí do vět v e‑mailech — „děkuji Vám za
+              prohlídku <strong>{data.emailName.trim() || data.title || "…"}</strong> na
+              adrese …“. Šablona sama doplní slovo „prohlídku“ i adresu, takže sem{" "}
+              <strong>nepište</strong> „Prohlídka“ ani adresu.{" "}
+              <span className="text-slate-400">
+                Když necháte prázdné, použije se „Název“ výše (jako dosud).
+              </span>
+            </p>
           </div>
           <div>
             <label className="label">Adresa</label>

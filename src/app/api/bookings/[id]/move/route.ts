@@ -148,7 +148,7 @@ export async function POST(
   }
 
   // Jeden e-mail klientovi o novém termínu
-  const serviceName = listing.title;
+  const serviceName = listing.emailName || listing.title;
   const dateStr = czDateTimeLong(slot.startsAt);
   const phone = booking.tenant.ownerPhone || "";
   const providerName = tenant.name;

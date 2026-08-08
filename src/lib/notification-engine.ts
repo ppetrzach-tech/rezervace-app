@@ -112,7 +112,11 @@ export async function processNotifications(): Promise<{
         client_greeting: formalGreeting(booking.client.name),
         client_email: booking.client.email,
         client_phone: booking.client.phone,
-        service_name: booking.listing?.title || booking.service.name,
+        // Krátký název pro e-maily, když je vyplněný; jinak plný název (jako dřív).
+        service_name:
+          booking.listing?.emailName ||
+          booking.listing?.title ||
+          booking.service.name,
         provider_name: booking.provider.name,
         provider_phone: booking.provider.phone || businessPhone,
         provider_email: booking.provider.email ?? "",
