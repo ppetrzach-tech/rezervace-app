@@ -250,6 +250,10 @@ model EventListing {
   // Když je prázdný, e-maily používají `title` – tj. chová se jako dřív.
   // Nemá vliv na veřejnou stránku, seznam, URL ani kalendář (tam je vždy `title`).
   emailName       String?
+  // Druh položky: "property" = nemovitost (prohlídka; VÝCHOZÍ, stávající chování),
+  // "consultation" = konzultace / obecná schůzka. Řídí popisky, skrytí realitních
+  // polí a cílení e-mailů. Výchozí "property" → všechny stávající položky beze změny.
+  kind            String   @default("property")
   description     String?
   address         String?
   imageUrl        String?  // hlavní fotka — URL na obrázek
@@ -329,6 +333,10 @@ model NotificationRule {
   includeConfirmButton Boolean  @default(false)
   // Posílat jen pokud klient ještě nepotvrdil (typicky SMS fallback)
   onlyIfNotConfirmed   Boolean  @default(false)
+  // Na jaký DRUH položky pravidlo platí: null = "property" (nemovitosti; stávající
+  // pravidla, zpětně kompatibilní), "consultation" = jen konzultace. Zajišťuje, že
+  // se prohlídková pravidla NIKDY nepřimíchají ke konzultacím a naopak.
+  appliesToKind        String?
   enabled              Boolean  @default(true)
   order                Int      @default(0)
   createdAt            DateTime @default(now())

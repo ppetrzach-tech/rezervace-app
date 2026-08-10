@@ -160,7 +160,8 @@ export default async function PropertiesPage() {
   if (!tenant) redirect("/login");
 
   const listings = await prisma.eventListing.findMany({
-    where: { tenantId: tenant.id },
+    // Jen nemovitosti — konzultace (kind="consultation") mají vlastní sekci.
+    where: { tenantId: tenant.id, kind: "property" },
     include: {
       _count: { select: { bookings: true } },
       slots: {

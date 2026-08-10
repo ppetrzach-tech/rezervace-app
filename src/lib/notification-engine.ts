@@ -62,6 +62,8 @@ export async function processNotifications(): Promise<{
   //   => anchor v rozsahu [now - offset - TOLERANCE, now - offset]
   for (const rule of rules) {
     const anchorField = rule.offsetMinutes < 0 ? "startsAt" : "endsAt";
+    // Druh, na který pravidlo cílí. null = nemovitosti (zpětná kompatibilita).
+    const ruleKind = rule.appliesToKind ?? "property";
 
     const windowEnd = addMinutes(now, -rule.offsetMinutes);
     const windowStart = addMinutes(windowEnd, -TOLERANCE_MIN);
@@ -83,6 +85,9 @@ export async function processNotifications(): Promise<{
     });
 
     for (const booking of bookings) {
+      // Oddělení druhů: pravidlo pro nemovitosti nikdy nepošle konzultaci a naopak.
+      const bookingKind = booking.listing?.kind ?? "property";
+      if (bookingKind !== ruleKind) continue;
       if (booking.notifications.length > 0) continue; // už jsme posílali
       if (booking.emailingStopped) continue; // klient/vlastník zastavil další emaily
       if (rule.onlyIfNotConfirmed && booking.confirmedByClientAt) continue;
