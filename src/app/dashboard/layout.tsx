@@ -36,6 +36,7 @@ export default async function DashboardLayout({
           <nav className="hidden md:flex items-center gap-1 text-sm">
             <NavItem href="/dashboard" label="Dashboard" />
             <NavItem href="/dashboard/properties" label="Nemovitosti" />
+            <NavItem href="/dashboard/consultations" label="Konzultace" />
             <NavItem href="/dashboard/bookings" label="Rezervace" />
             <NavItem href="/dashboard/settings" label="Nastavení" />
           </nav>
@@ -55,6 +56,7 @@ export default async function DashboardLayout({
         <nav className="md:hidden flex border-t border-slate-200 text-xs overflow-x-auto">
           <MobileNavItem href="/dashboard" label="Dashboard" />
           <MobileNavItem href="/dashboard/properties" label="Nemovitosti" />
+          <MobileNavItem href="/dashboard/consultations" label="Konzultace" />
           <MobileNavItem href="/dashboard/bookings" label="Rezervace" />
           <MobileNavItem href="/dashboard/settings" label="Nastavení" />
         </nav>

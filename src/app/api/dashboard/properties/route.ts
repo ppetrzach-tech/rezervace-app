@@ -12,6 +12,8 @@ const schema = z.object({
   address: z.string().max(300).optional().default(""),
   description: z.string().max(2000).optional().default(""),
   durationMinutes: z.number().int().min(5).max(8 * 60),
+  // Druh položky. Výchozí "property" → zakládání nemovitostí beze změny.
+  kind: z.enum(["property", "consultation"]).optional().default("property"),
 });
 
 export async function POST(req: NextRequest) {
@@ -53,6 +55,7 @@ export async function POST(req: NextRequest) {
       address: data.address || null,
       description: data.description || null,
       durationMinutes: data.durationMinutes,
+      kind: data.kind,
     },
   });
   return NextResponse.json({ ok: true, id: listing.id });
