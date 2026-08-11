@@ -236,13 +236,57 @@ export function PropertyEditor({
     }
     setPhotoUploading(true);
     setMsg(null);
-    try {
-      const { upload } = await import("@vercel/blob/client");
-      const blob = await upload(file.name, file, {
-        access: "public",
-        handleUploadUrl: "/api/dashboard/upload",
+
+    // Zmenšení fotky v prohlížeči (max 1920 px, JPEG) — vejde se pod limit
+    // serverless funkce i u velkých fotek z mobilu a nahrání je rychlé.
+    function resize(f: File): Promise<Blob> {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(f);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          let w = img.naturalWidth || img.width;
+          let h = img.naturalHeight || img.height;
+          const max = 1920;
+          if (w > max || h > max) {
+            const s = max / Math.max(w, h);
+            w = Math.round(w * s);
+            h = Math.round(h * s);
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Prohlížeč nezvládl zpracovat obrázek."));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob(
+            (b) => (b ? resolve(b) : reject(new Error("Zmenšení selhalo."))),
+            "image/jpeg",
+            0.82,
+          );
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("Nepodařilo se načíst obrázek."));
+        };
+        img.src = url;
       });
-      setData((prev) => ({ ...prev, imageUrl: blob.url }));
+    }
+
+    try {
+      const resized = await resize(file);
+      const fd = new FormData();
+      fd.append("file", resized, "photo.jpg");
+      const res = await fetch("/api/dashboard/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Nahrání selhalo");
+      setData((prev) => ({ ...prev, imageUrl: json.url }));
       setMsg({ ok: true, text: "Fotka nahrána. Nezapomeňte uložit detaily." });
     } catch (err) {
       setMsg({

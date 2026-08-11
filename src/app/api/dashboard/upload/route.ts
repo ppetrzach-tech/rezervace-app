@@ -1,65 +1,70 @@
 import { NextRequest, NextResponse } from "next/server";
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { put } from "@vercel/blob";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { canManage } from "@/lib/perms";
 
+export const runtime = "nodejs";
+
 /**
- * Nahrání fotky přímo z prohlížeče do Vercel Blob (client upload).
- * Prohlížeč posílá soubor rovnou do úložiště — tenhle route jen vystaví
- * krátkodobý token po ověření přihlášení (obchází 4,5 MB limit serverless
- * funkce, takže projdou i velké fotky z mobilu).
+ * Serverové nahrání fotky do Vercel Blob.
+ * Prohlížeč pošle už ZMENŠENÝ obrázek (FormData) — díky tomu se vejde pod limit
+ * serverless funkce a nahrání je rychlé a spolehlivé (bez křehkého client-upload
+ * flow). Vrátí veřejnou URL, kterou uložíme do imageUrl nemovitosti.
  *
- * Vyžaduje úložiště Vercel Blob (env BLOB_READ_WRITE_TOKEN). Když chybí,
- * vrátí srozumitelnou chybu a nic jiného v aplikaci to neovlivní.
+ * Vyžaduje úložiště Vercel Blob (BLOB_READ_WRITE_TOKEN). Bez něj vrací 503.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.tenantId || !canManage(session.user)) {
+    return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
+  }
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     return NextResponse.json(
-      {
-        error:
-          "Úložiště fotek zatím není nastavené (Vercel Blob). Vytvořte ho v nastavení projektu.",
-      },
+      { error: "Úložiště fotek zatím není nastavené (Vercel Blob)." },
       { status: 503 },
     );
   }
 
-  let body: HandleUploadBody;
+  let form: FormData;
   try {
-    body = (await req.json()) as HandleUploadBody;
+    form = await req.formData();
   } catch {
     return NextResponse.json({ error: "Neplatný požadavek" }, { status: 400 });
   }
+  const file = form.get("file");
+  if (!(file instanceof File)) {
+    return NextResponse.json({ error: "Chybí soubor" }, { status: 400 });
+  }
+  if (!file.type.startsWith("image/")) {
+    return NextResponse.json(
+      { error: "Nahrajte prosím obrázek (JPG, PNG…)." },
+      { status: 400 },
+    );
+  }
+  // Po zmenšení v prohlížeči by fotka měla mít < 2 MB; strop je pojistka.
+  if (file.size > 8 * 1024 * 1024) {
+    return NextResponse.json(
+      { error: "Fotka je i po zmenšení moc velká. Zkuste jinou." },
+      { status: 413 },
+    );
+  }
+
+  const ext = (file.type.split("/")[1] || "jpg").replace(/[^a-z0-9]/gi, "") || "jpg";
+  const key = `listings/${session.user.tenantId}/${Date.now()}.${ext}`;
 
   try {
-    const result = await handleUpload({
-      body,
-      request: req,
-      onBeforeGenerateToken: async () => {
-        // Nahrávat smí jen přihlášený správce daného účtu.
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.tenantId || !canManage(session.user)) {
-          throw new Error("Bez oprávnění");
-        }
-        return {
-          allowedContentTypes: [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/gif",
-          ],
-          maximumSizeInBytes: 15 * 1024 * 1024,
-          tokenPayload: JSON.stringify({ tenantId: session.user.tenantId }),
-        };
-      },
-      // URL si klient vezme přímo z výsledku upload() — tady nic dělat nemusíme.
-      onUploadCompleted: async () => {},
+    const blob = await put(key, file, {
+      access: "public",
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+      contentType: file.type,
+      addRandomSuffix: true,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({ ok: true, url: blob.url });
   } catch (err) {
     return NextResponse.json(
-      { error: (err as Error).message || "Nahrání selhalo" },
-      { status: 400 },
+      { error: "Nahrání selhalo: " + ((err as Error).message || "chyba úložiště") },
+      { status: 500 },
     );
   }
 }
