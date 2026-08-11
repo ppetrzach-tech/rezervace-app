@@ -40,16 +40,18 @@ export function PropertyBookingFlow({
   tenantSlug,
   tenantName,
   locale = "cs",
+  kind = "property",
   listing,
   slots,
 }: {
   tenantSlug: string;
   tenantName: string;
   locale?: AppLocale;
+  kind?: string;
   listing: Listing;
   slots: Slot[];
 }) {
-  const tr = createT(locale);
+  const tr = createT(locale, kind);
   const [step, setStep] = useState<Step>("date");
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(

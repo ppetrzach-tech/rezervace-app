@@ -190,6 +190,46 @@ const sk: Dict = {
 
 const DICT: Record<Locale, Dict> = { cs, en, sk };
 
+// Přepisy textů pro KONZULTACE (kind="consultation") — jen klíče, které se liší
+// od prohlídek. Ostatní klíče (a celé prohlídky) se berou ze základního slovníku.
+const csConsult: Dict = {
+  "booking.viewing_title": "Rezervace konzultace",
+  "booking.viewed_by": "Konzultaci vede",
+  "booking.about": "O konzultaci",
+  "booking.location": "Místo konání",
+  "booking.safe_desc":
+    "Vaše údaje slouží jen k organizaci schůzky. Žádné spamy ani marketing.",
+  "calendar.title": "Vyberte termín konzultace",
+  "form.gdpr":
+    "Odesláním souhlasíte se zpracováním vašich údajů pro účely konzultace.",
+  "done.your_viewing": "Vaše konzultace",
+};
+const enConsult: Dict = {
+  "booking.viewing_title": "Book a consultation",
+  "booking.viewed_by": "Consultation led by",
+  "booking.about": "About the consultation",
+  "booking.location": "Location",
+  "booking.safe_desc":
+    "Your data is only used to organize the meeting. No spam or marketing.",
+  "calendar.title": "Choose a consultation date",
+  "form.gdpr":
+    "By submitting, you agree to our processing of your data for the purpose of the consultation.",
+  "done.your_viewing": "Your consultation",
+};
+const skConsult: Dict = {
+  "booking.viewing_title": "Rezervácia konzultácie",
+  "booking.viewed_by": "Konzultáciu vedie",
+  "booking.about": "O konzultácii",
+  "booking.location": "Miesto konania",
+  "booking.safe_desc":
+    "Vaše údaje slúžia len na organizáciu stretnutia. Žiadny spam ani marketing.",
+  "calendar.title": "Vyberte termín konzultácie",
+  "form.gdpr":
+    "Odoslaním súhlasíte so spracovaním vašich údajov pre účely konzultácie.",
+  "done.your_viewing": "Vaša konzultácia",
+};
+const CONSULT: Record<Locale, Dict> = { cs: csConsult, en: enConsult, sk: skConsult };
+
 export function getLocaleFromString(s: string | null | undefined): Locale {
   if (!s) return "cs";
   const lower = s.toLowerCase();
@@ -203,9 +243,15 @@ export function getDictionary(locale: Locale): Dict {
 }
 
 /**
- * Vrátí překládací funkci pro daný jazyk.
+ * Vrátí překládací funkci pro daný jazyk (a volitelně druh položky).
+ * Pro kind="consultation" se u vybraných klíčů použije konzultační text;
+ * bez kind (nebo "property") jsou texty přesně jako u prohlídek.
  */
-export function t(locale: Locale): (key: string) => string {
+export function t(
+  locale: Locale,
+  kind?: string,
+): (key: string) => string {
   const dict = getDictionary(locale);
-  return (key: string) => dict[key] ?? key;
+  const overrides = kind === "consultation" ? CONSULT[locale] ?? CONSULT.cs : null;
+  return (key: string) => (overrides ? overrides[key] : undefined) ?? dict[key] ?? key;
 }

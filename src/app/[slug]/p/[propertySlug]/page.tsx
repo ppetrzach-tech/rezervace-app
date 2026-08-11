@@ -22,8 +22,12 @@ export async function generateMetadata({
     where: { tenantId: tenant.id, slug: params.propertySlug, active: true },
   });
   if (!listing) return { title: "Nenalezeno" };
+  const suffix =
+    listing.kind === "consultation"
+      ? "rezervace konzultace"
+      : "rezervace prohlídky";
   return {
-    title: `${listing.title} — rezervace prohlídky`,
+    title: `${listing.title} — ${suffix}`,
     description: listing.description ?? undefined,
   };
 }
@@ -94,7 +98,7 @@ export default async function PropertyPage({
   } else if (acceptLang) {
     locale = getLocaleFromString(acceptLang.split(",")[0]);
   }
-  const tr = t(locale);
+  const tr = t(locale, listing.kind);
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -140,7 +144,9 @@ export default async function PropertyPage({
         )}
         <div className="relative max-w-5xl mx-auto px-4 py-8 sm:py-12">
           <div className="flex items-start gap-4">
-            <div className="text-6xl shrink-0 hidden sm:block drop-shadow">🏠</div>
+            <div className="text-6xl shrink-0 hidden sm:block drop-shadow">
+              {listing.kind === "consultation" ? "💬" : "🏠"}
+            </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">
                 {tr("booking.viewing_title")}
@@ -179,6 +185,7 @@ export default async function PropertyPage({
             tenantSlug={tenant.slug}
             tenantName={tenant.name}
             locale={locale}
+            kind={listing.kind}
             listing={{
               id: listing.id,
               title: listing.title,
@@ -226,6 +233,7 @@ export default async function PropertyPage({
                 <span>{tr("booking.location")}</span>
               </h3>
               <p className="text-sm text-slate-600 mb-3">{listing.address}</p>
+              {listing.kind !== "consultation" && (
               <div className="flex flex-col gap-2">
                 <a
                   href={`https://mapy.cz/?q=${encodeURIComponent(listing.address)}`}
@@ -252,6 +260,7 @@ export default async function PropertyPage({
                   <span className="text-slate-400">↗</span>
                 </a>
               </div>
+              )}
             </div>
           )}
 
