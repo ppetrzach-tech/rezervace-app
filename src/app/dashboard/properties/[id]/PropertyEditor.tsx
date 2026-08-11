@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { addMinutes } from "date-fns";
 import { czDateTimeLong, czDayMonthTime } from "@/lib/datetime";
 import { CopyButton } from "../../CopyButton";
@@ -131,6 +131,7 @@ export function PropertyEditor({
   const [tab, setTab] = useState<Tab>(stats ? "overview" : "details");
   const [data, setData] = useState<PropertyData>(initial);
   const [saving, setSaving] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [newSlotDate, setNewSlotDate] = useState("");
   const [newSlotTime, setNewSlotTime] = useState("");
@@ -222,6 +223,34 @@ export function PropertyEditor({
     } finally {
       setSaving(false);
       setTimeout(() => setMsg(null), 3000);
+    }
+  }
+
+  async function uploadPhoto(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // umožní znovu vybrat týž soubor
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setMsg({ ok: false, text: "Vyberte prosím obrázek (JPG, PNG…)." });
+      return;
+    }
+    setPhotoUploading(true);
+    setMsg(null);
+    try {
+      const { upload } = await import("@vercel/blob/client");
+      const blob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/dashboard/upload",
+      });
+      setData((prev) => ({ ...prev, imageUrl: blob.url }));
+      setMsg({ ok: true, text: "Fotka nahrána. Nezapomeňte uložit detaily." });
+    } catch (err) {
+      setMsg({
+        ok: false,
+        text: "Nahrání se nepodařilo: " + ((err as Error).message || "chyba"),
+      });
+    } finally {
+      setPhotoUploading(false);
     }
   }
 
@@ -628,18 +657,35 @@ export function PropertyEditor({
               value={data.imageUrl}
               onChange={(e) => setData({ ...data, imageUrl: e.target.value })}
             />
-            <p className="text-xs text-slate-500 mt-1">
-              Nahrajte foto na Google Drive, Imgur nebo cokoliv jiného a sem
-              vložte přímý odkaz. Tip: na{" "}
-              <a
-                href="https://imgur.com/upload"
-                target="_blank"
-                rel="noreferrer"
-                className="text-brand-700 hover:underline"
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <label
+                className={`btn-secondary text-xs cursor-pointer ${
+                  photoUploading ? "opacity-60 pointer-events-none" : ""
+                }`}
               >
-                imgur.com/upload
-              </a>{" "}
-              přetáhněte foto, pravým klikem zkopírujte adresu obrázku.
+                {photoUploading ? "Nahrávám…" : "📤 Nahrát fotku z počítače"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={photoUploading}
+                  onChange={uploadPhoto}
+                />
+              </label>
+              {data.imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setData({ ...data, imageUrl: "" })}
+                  className="text-xs text-red-600 hover:underline"
+                >
+                  Odebrat fotku
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Nejjednodušší je nahrát fotku z počítače tlačítkem výše. Nebo do
+              pole vložte přímý odkaz na obrázek (končící .jpg/.png). Odkaz z
+              Google Drive sem vložit nelze.
             </p>
             {data.imageUrl && (
               <div className="mt-2 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
