@@ -269,6 +269,9 @@ model EventListing {
   provider        Provider? @relation(fields: [providerId], references: [id])
   // Vlastní otázky — JSON: [{ id, label, type: 'text'|'textarea'|'yesno'|'select'|'number', required, options? }]
   formQuestions   Json     @default("[]")
+  // Opakující se termíny (jen konzultace) — JSON: [{ weekday: 0-6 (0=Ne), time: "HH:MM" }].
+  // Z nich se dopředu generují reálné EventSloty (cron + při uložení).
+  recurringSlots  Json     @default("[]")
   active          Boolean  @default(true)
   createdAt       DateTime @default(now())
 

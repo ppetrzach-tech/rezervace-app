@@ -68,6 +68,12 @@ export default async function ConsultationDetailPage({
         providerId: listing.providerId,
         active: listing.active,
         formQuestions,
+        recurringSlots: Array.isArray(listing.recurringSlots)
+          ? (listing.recurringSlots as unknown as {
+              weekday: number;
+              time: string;
+            }[])
+          : [],
         slots: listing.slots.map((s) => ({
           id: s.id,
           startsAt: s.startsAt.toISOString(),

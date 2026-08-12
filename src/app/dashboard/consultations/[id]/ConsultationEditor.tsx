@@ -20,6 +20,7 @@ type FormQuestion = {
   options?: string[];
 };
 type Provider = { id: string; name: string };
+type RecurringRule = { weekday: number; time: string };
 type Data = {
   id: string;
   slug: string;
@@ -31,8 +32,19 @@ type Data = {
   providerId: string | null;
   active: boolean;
   formQuestions: FormQuestion[];
+  recurringSlots: RecurringRule[];
   slots: Slot[];
 };
+
+const WEEKDAYS = [
+  "Neděle",
+  "Pondělí",
+  "Úterý",
+  "Středa",
+  "Čtvrtek",
+  "Pátek",
+  "Sobota",
+];
 
 export function ConsultationEditor({
   tenantSlug,
@@ -49,6 +61,40 @@ export function ConsultationEditor({
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [newSlotDate, setNewSlotDate] = useState("");
   const [newSlotTime, setNewSlotTime] = useState("");
+  const [recurWeekday, setRecurWeekday] = useState(1); // Pondělí
+  const [recurTime, setRecurTime] = useState("");
+
+  function addRecurringRule() {
+    if (!recurTime) {
+      setMsg({ ok: false, text: "Vyberte čas opakujícího se termínu." });
+      return;
+    }
+    if (
+      data.recurringSlots.some(
+        (r) => r.weekday === recurWeekday && r.time === recurTime,
+      )
+    ) {
+      setMsg({ ok: false, text: "Tenhle opakující se termín už tam je." });
+      return;
+    }
+    setData((prev) => ({
+      ...prev,
+      recurringSlots: [
+        ...prev.recurringSlots,
+        { weekday: recurWeekday, time: recurTime },
+      ],
+    }));
+    setRecurTime("");
+    setMsg({ ok: true, text: "Přidáno. Klikněte Uložit opakující se termíny." });
+    setTimeout(() => setMsg(null), 2500);
+  }
+
+  function removeRecurringRule(index: number) {
+    setData((prev) => ({
+      ...prev,
+      recurringSlots: prev.recurringSlots.filter((_, i) => i !== index),
+    }));
+  }
 
   const publicPath = `/${tenantSlug}/p/${data.slug}`;
   const upcoming = data.slots.filter(
@@ -75,6 +121,7 @@ export function ConsultationEditor({
           providerId: data.providerId,
           active: data.active,
           formQuestions: data.formQuestions,
+          recurringSlots: data.recurringSlots,
         }),
       });
       const json = await res.json();
@@ -304,6 +351,82 @@ export function ConsultationEditor({
           >
             {saving ? "Ukládám…" : "Uložit detaily"}
           </button>
+        </div>
+      </section>
+
+      {/* Opakující se termíny */}
+      <section className="card space-y-4">
+        <div>
+          <h2 className="font-semibold">🔁 Opakující se termíny</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Nastav den v týdnu a čas — termín se pak nabízí pořád dopředu, nemusíš
+            ho přidávat ručně. Když v ten čas máš v Google kalendáři událost,
+            termín se sám schová.
+          </p>
+        </div>
+
+        <div className="flex gap-2 flex-wrap items-end">
+          <div>
+            <label className="label">Den</label>
+            <select
+              className="input"
+              value={recurWeekday}
+              onChange={(e) => setRecurWeekday(parseInt(e.target.value, 10))}
+            >
+              {[1, 2, 3, 4, 5, 6, 0].map((wd) => (
+                <option key={wd} value={wd}>
+                  {WEEKDAYS[wd]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">Čas</label>
+            <input
+              type="time"
+              className="input"
+              value={recurTime}
+              onChange={(e) => setRecurTime(e.target.value)}
+            />
+          </div>
+          <button onClick={addRecurringRule} className="btn-secondary">
+            + Přidat opakování
+          </button>
+        </div>
+
+        {data.recurringSlots.length === 0 ? (
+          <div className="text-sm text-slate-500 text-center py-3 bg-slate-50 rounded-lg">
+            Žádné opakující se termíny.
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {data.recurringSlots.map((r, i) => (
+              <li
+                key={`${r.weekday}-${r.time}-${i}`}
+                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-100"
+              >
+                <span className="text-sm font-medium">
+                  🔁 {WEEKDAYS[r.weekday]} v {r.time}
+                </span>
+                <button
+                  onClick={() => removeRecurringRule(i)}
+                  className="text-sm text-red-600 hover:underline"
+                >
+                  Odebrat
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="pt-1">
+          <button onClick={saveDetails} disabled={saving} className="btn-primary">
+            {saving ? "Ukládám…" : "Uložit opakující se termíny"}
+          </button>
+          <p className="text-xs text-slate-500 mt-2">
+            Po uložení se termíny na 10 týdnů dopředu vygenerují a objeví se níže
+            v seznamu. Systém je pak sám drží doplněné.
+          </p>
         </div>
       </section>
 

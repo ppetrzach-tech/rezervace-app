@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processNotifications } from "@/lib/notification-engine";
+import { generateAllRecurringSlots } from "@/lib/recurring-slots";
 
 /**
  * Endpoint pro spouštění notifikačního engine.
@@ -21,5 +22,8 @@ export async function GET(req: NextRequest) {
   }
 
   const result = await processNotifications();
-  return NextResponse.json(result);
+  // Doplní opakující se termíny konzultací (posune okno dopředu). Chyba tady
+  // nesmí shodit notifikace.
+  const recurringCreated = await generateAllRecurringSlots().catch(() => 0);
+  return NextResponse.json({ ...result, recurringCreated });
 }

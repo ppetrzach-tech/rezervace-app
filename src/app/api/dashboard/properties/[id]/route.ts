@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { slugify } from "@/lib/tenant";
 import { canManage } from "@/lib/perms";
+import { ensureRecurringSlots } from "@/lib/recurring-slots";
 
 const questionSchema = z.object({
   id: z.string(),
@@ -42,6 +43,16 @@ const schema = z.object({
   providerId: z.string().nullable(),
   active: z.boolean(),
   formQuestions: z.array(questionSchema),
+  // Opakující se termíny (jen konzultace). Prázdné = nic negeneruje.
+  recurringSlots: z
+    .array(
+      z.object({
+        weekday: z.number().int().min(0).max(6),
+        time: z.string().regex(/^\d{1,2}:\d{2}$/),
+      }),
+    )
+    .optional()
+    .default([]),
 });
 
 /** Doplní https:// pokud odkaz nemá schéma. Prázdné nechá prázdné. */
@@ -120,8 +131,24 @@ export async function PATCH(
       providerId: data.providerId,
       active: data.active,
       formQuestions: data.formQuestions,
+      recurringSlots: data.recurringSlots,
     },
   });
+
+  // U konzultací s opakujícími se termíny hned dogeneruj reálné sloty dopředu,
+  // ať jsou k dispozici okamžitě (cron je pak průběžně posouvá dál).
+  if (own.kind === "consultation" && data.recurringSlots.length > 0) {
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { googleTimezone: true },
+    });
+    await ensureRecurringSlots({
+      id: params.id,
+      durationMinutes: data.durationMinutes,
+      recurringSlots: data.recurringSlots,
+      timeZone: tenant?.googleTimezone || "Europe/Prague",
+    }).catch(() => {});
+  }
 
   return NextResponse.json({ ok: true });
 }
