@@ -38,6 +38,9 @@ export default async function NotificationsPage() {
           includeConfirmButton: r.includeConfirmButton,
           onlyIfNotConfirmed: r.onlyIfNotConfirmed,
           enabled: r.enabled,
+          appliesToKind: (r.appliesToKind === "consultation"
+            ? "consultation"
+            : "property") as "property" | "consultation",
         }))}
       />
     </div>

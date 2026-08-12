@@ -15,6 +15,7 @@ const schema = z.object({
   includeConfirmButton: z.boolean().default(false),
   onlyIfNotConfirmed: z.boolean().default(false),
   enabled: z.boolean().default(true),
+  appliesToKind: z.enum(["property", "consultation"]).optional(),
 });
 
 export async function PATCH(
@@ -55,6 +56,7 @@ export async function PATCH(
       includeConfirmButton: data.includeConfirmButton,
       onlyIfNotConfirmed: data.onlyIfNotConfirmed,
       enabled: data.enabled,
+      appliesToKind: data.appliesToKind ?? null,
     },
   });
   return NextResponse.json({ ok: true });

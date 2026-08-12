@@ -15,6 +15,8 @@ const schema = z.object({
   includeConfirmButton: z.boolean().default(false),
   onlyIfNotConfirmed: z.boolean().default(false),
   enabled: z.boolean().default(true),
+  // Na jaký druh položky pravidlo platí. "property" (nebo nezadáno) = nemovitosti.
+  appliesToKind: z.enum(["property", "consultation"]).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
       includeConfirmButton: data.includeConfirmButton,
       onlyIfNotConfirmed: data.onlyIfNotConfirmed,
       enabled: data.enabled,
+      appliesToKind: data.appliesToKind ?? null,
     },
   });
   return NextResponse.json({ ok: true });

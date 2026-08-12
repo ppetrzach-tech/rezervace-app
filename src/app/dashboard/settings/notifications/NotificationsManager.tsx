@@ -14,6 +14,8 @@ type Rule = {
   includeConfirmButton: boolean;
   onlyIfNotConfirmed: boolean;
   enabled: boolean;
+  // Na jaký druh položky pravidlo platí. Nezadáno = nemovitosti.
+  appliesToKind?: "property" | "consultation";
 };
 
 const emptyRule: Omit<Rule, "id"> = {
@@ -26,6 +28,7 @@ const emptyRule: Omit<Rule, "id"> = {
   includeConfirmButton: false,
   onlyIfNotConfirmed: false,
   enabled: true,
+  appliesToKind: "property",
 };
 
 const PRESETS: Array<Omit<Rule, "id"> & { presetName: string }> = [
@@ -93,6 +96,34 @@ const PRESETS: Array<Omit<Rule, "id"> & { presetName: string }> = [
     includeConfirmButton: false,
     onlyIfNotConfirmed: false,
     enabled: true,
+  },
+  {
+    presetName: "💬 Konzultace: připomínka 24 h předem",
+    name: "Konzultace — připomínka 24 h předem",
+    channel: "email",
+    offsetMinutes: -24 * 60,
+    subject: "Připomínka konzultace zítra v {{time}}",
+    body:
+      "{{client_greeting}},\n\npřipomínám naši konzultaci **{{service_name}}** zítra v {{time}}.\nMísto konání: {{location}}\n\nKdyby vám termín nevyhovoval, dejte mi prosím vědět.\n\nTěším se na vás,\n{{provider_name}}\nTel.: {{business_phone}}",
+    includeIcs: true,
+    includeConfirmButton: false,
+    onlyIfNotConfirmed: false,
+    enabled: true,
+    appliesToKind: "consultation",
+  },
+  {
+    presetName: "💬 Konzultace: poděkování 1 h po",
+    name: "Konzultace — poděkování 1 h po",
+    channel: "email",
+    offsetMinutes: 60,
+    subject: "Děkuji za dnešní konzultaci",
+    body:
+      "{{client_greeting}},\n\nděkuji Vám za dnešní konzultaci. Pokud budete mít jakékoli dotazy nebo zpětnou vazbu, napište mi prosím nebo zavolejte.\n\nDěkuji a přeji hezký den,\n{{provider_name}}\nTel.: {{business_phone}}",
+    includeIcs: false,
+    includeConfirmButton: false,
+    onlyIfNotConfirmed: false,
+    enabled: true,
+    appliesToKind: "consultation",
   },
 ];
 
@@ -229,6 +260,11 @@ export function NotificationsManager({
                   )}
                 </h3>
                 <div className="text-xs text-slate-500 mt-1 space-y-0.5">
+                  <div>
+                    {r.appliesToKind === "consultation"
+                      ? "💬 Platí pro: Konzultace"
+                      : "🏠 Platí pro: Nemovitosti"}
+                  </div>
                   <div>⏰ {offsetLabel(r.offsetMinutes)}</div>
                   {r.subject && <div>📝 {r.subject}</div>}
                   {r.includeIcs && <div>📅 přiloží kalendářovou událost</div>}
@@ -364,6 +400,27 @@ function RuleForm({
                 Pravidlo je zapnuté
               </label>
             </div>
+          </div>
+
+          <div>
+            <label className="label">Platí pro *</label>
+            <select
+              className="input"
+              value={data.appliesToKind ?? "property"}
+              onChange={(e) =>
+                setData({
+                  ...data,
+                  appliesToKind: e.target.value as "property" | "consultation",
+                })
+              }
+            >
+              <option value="property">🏠 Nemovitosti (prohlídky)</option>
+              <option value="consultation">💬 Konzultace</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Určuje, u kterých rezervací se pravidlo použije — konzultace a
+              prohlídky se tak navzájem neovlivní.
+            </p>
           </div>
 
           <div>
