@@ -26,7 +26,6 @@ export default async function SettingsLayout({
     { href: "/dashboard/settings", label: "Firma", icon: "🏢", ownerOnly: true },
     { href: "/dashboard/settings/notifications", label: "Notifikace", icon: "🔔", ownerOnly: false },
     { href: "/dashboard/settings/team", label: "Tým", icon: "👥", ownerOnly: true },
-    { href: "/dashboard/settings/hours", label: "Pracovní doba", icon: "🕐", ownerOnly: false },
     { href: "/dashboard/settings/integrations", label: "Integrace", icon: "🔌", ownerOnly: true },
     { href: "/dashboard/settings/account", label: "Účet", icon: "🔑", ownerOnly: false },
   ];

@@ -208,7 +208,7 @@ export async function POST(
     const gcalRes = await createCalendarEvent({
       calendarId: tenant.googleCalendarId,
       timezone: tenant.googleTimezone,
-      summary: `🏠 ${listing.title} — ${clientRecord.name}`,
+      summary: `${listing.kind === "consultation" ? "💬" : "🏠"} ${listing.title} — ${clientRecord.name}`,
       description: desc,
       location: listing.address ?? undefined,
       startsAt: slot.startsAt,
