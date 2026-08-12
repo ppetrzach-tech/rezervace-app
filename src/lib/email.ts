@@ -19,6 +19,8 @@ type BookingEmailData = {
   businessName?: string;
   /** HTML s tlačítky "Přidat do kalendáře" (Google / .ics), vkládá se do těla. */
   calendarHtml?: string;
+  /** Odkaz, kde klient může termín přeplánovat / zrušit (self-service). */
+  manageUrl?: string;
   replyTo?: string;
 };
 
@@ -46,8 +48,13 @@ export async function sendBookingConfirmationEmail(
         ${data.note ? `<tr><td style="padding: 8px 0; color: #6b7280;">Poznámka:</td><td>${escapeHtml(data.note)}</td></tr>` : ""}
       </table>
       ${data.calendarHtml ?? ""}
+      ${
+        data.manageUrl
+          ? `<p style="margin-top: 16px;">Nevyhovuje vám termín? <a href="${data.manageUrl}" style="color: #2563eb;">Přeplánovat nebo zrušit</a>.</p>`
+          : ""
+      }
       <p style="color: #6b7280; font-size: 13px;">Rezervační číslo: ${data.bookingId}</p>
-      <p>Potřebujete změnu? Odpovězte na tento email.</p>
+      <p>Potřebujete pomoct? Stačí odpovědět na tento email.</p>
     </div>
   `;
 

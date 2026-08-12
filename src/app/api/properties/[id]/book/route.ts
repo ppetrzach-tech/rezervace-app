@@ -172,6 +172,7 @@ export async function POST(
     businessName: tenant.name,
     replyTo: tenant.replyToEmail || tenant.ownerEmail || undefined,
     calendarHtml,
+    manageUrl: `${appBaseUrl}/booking/manage/${confirmationToken}`,
   });
 
   // Zalogovat potvrzovací email do historie notifikací

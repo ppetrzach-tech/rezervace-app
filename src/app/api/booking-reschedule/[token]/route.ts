@@ -137,6 +137,7 @@ export async function POST(
     businessName: tenant.name,
     replyTo: tenant.replyToEmail || tenant.ownerEmail || undefined,
     calendarHtml,
+    manageUrl: `${appBaseUrl}/booking/manage/${confirmationToken}`,
   }).catch(() => ({ ok: false, error: "send failed" }) as const);
 
   await prisma.notificationLog
