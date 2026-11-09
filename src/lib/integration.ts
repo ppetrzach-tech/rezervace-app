@@ -42,28 +42,43 @@ export const INTEGRATION_SOURCE = "tabidoo";
  * sendConfirmation "false"/"0" → false.
  */
 export async function readIntegrationBody(req: NextRequest): Promise<unknown> {
-  const ct = req.headers.get("content-type") ?? "";
-  if (ct.includes("application/x-www-form-urlencoded") || ct.includes("multipart/form-data")) {
+  const ct = (req.headers.get("content-type") ?? "").toLowerCase();
+  let flatSource: Iterable<[string, string]> | null = null;
+
+  if (ct.includes("multipart/form-data")) {
     const form = await req.formData();
-    const flat: Record<string, string> = {};
+    const pairs: [string, string][] = [];
     form.forEach((v, k) => {
-      if (typeof v === "string" && v.trim() !== "") flat[k] = v.trim();
+      if (typeof v === "string") pairs.push([k, v]);
     });
-    const out: Record<string, unknown> = {};
-    const client: Record<string, string> = {};
-    for (const [k, v] of Object.entries(flat)) {
-      if (k === "clientName") client.name = v;
-      else if (k === "clientEmail") client.email = v;
-      else if (k === "clientPhone") client.phone = v;
-      else if (k === "sendConfirmation") out.sendConfirmation = !["false", "0", "ne", "no"].includes(v.toLowerCase());
-      else out[k] = v;
+    flatSource = pairs;
+  } else {
+    // Čteme jako text a rozhodneme podle obsahu — Make někdy nepošle správnou
+    // hlavičku Content-Type, proto se na ni nespoléháme.
+    const text = (await req.text()).trim();
+    if (!text) return {};
+    if (text.startsWith("{") || text.startsWith("[")) {
+      try {
+        return JSON.parse(text);
+      } catch {
+        return undefined;
+      }
     }
-    if (Object.keys(client).length) out.client = client;
-    return out;
+    flatSource = new URLSearchParams(text).entries();
   }
-  try {
-    return await req.json();
-  } catch {
-    return undefined;
+
+  const out: Record<string, unknown> = {};
+  const client: Record<string, string> = {};
+  for (const [k, raw] of flatSource) {
+    const v = raw.trim();
+    if (v === "") continue;
+    if (k === "clientName") client.name = v;
+    else if (k === "clientEmail") client.email = v;
+    else if (k === "clientPhone") client.phone = v;
+    else if (k === "sendConfirmation")
+      out.sendConfirmation = !["false", "0", "ne", "no"].includes(v.toLowerCase());
+    else out[k] = v;
   }
+  if (Object.keys(client).length) out.client = client;
+  return out;
 }

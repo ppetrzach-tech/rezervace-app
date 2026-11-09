@@ -54,7 +54,12 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Neplatná data", issues: parsed.error.flatten() },
+      {
+        error: "Neplatná data",
+        contentType: req.headers.get("content-type"),
+        receivedKeys: body && typeof body === "object" ? Object.keys(body) : [],
+        issues: parsed.error.flatten(),
+      },
       { status: 400 },
     );
   }
