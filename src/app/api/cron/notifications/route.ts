@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { processNotifications } from "@/lib/notification-engine";
 import { generateAllRecurringSlots } from "@/lib/recurring-slots";
 
+// Nikdy nepředgenerovat při buildu — cron musí běžet při každém volání.
+export const dynamic = "force-dynamic";
+
 /**
  * Endpoint pro spouštění notifikačního engine.
  *

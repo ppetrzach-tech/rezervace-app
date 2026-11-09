@@ -3,8 +3,7 @@ import { z } from "zod";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
 import { getTenantBySlug } from "@/lib/tenant";
-import { sendBookingConfirmationEmail } from "@/lib/email";
-import { calendarButtonsHtml } from "@/lib/calendar-links";
+import { sendListingBookingConfirmation } from "@/lib/booking-actions";
 import { PUBLIC_BASE_URL } from "@/lib/base-url";
 import { createCalendarEvent, isCalendarConfigured } from "@/lib/google-calendar";
 import { sendOwnerNewBookingEmail } from "@/lib/owner-notify";
@@ -147,45 +146,14 @@ export async function POST(
     },
   });
 
-  const appBaseUrl = PUBLIC_BASE_URL;
-  const calendarHtml = calendarButtonsHtml({
-    title: `${listing.title}${tenant.name ? ` — ${tenant.name}` : ""}`,
-    startsAt: slot.startsAt,
-    endsAt: slot.endsAt,
-    location: listing.address ?? undefined,
-    icsUrl: `${appBaseUrl}/api/booking-ics/${confirmationToken}`,
+  // Potvrzovací e-mail klientovi (+ zápis do NotificationLog) — sdílené s integrací.
+  const emailRes = await sendListingBookingConfirmation({
+    booking,
+    listing,
+    tenant,
+    client: clientRecord,
   });
-
-  const emailRes = await sendBookingConfirmationEmail({
-    clientName: clientRecord.name,
-    clientEmail: clientRecord.email,
-    serviceName: listing.emailName || listing.title,
-    providerName: listing.provider?.name ?? tenant.name,
-    startsAt: slot.startsAt,
-    durationMinutes: listing.durationMinutes,
-    priceCzk: 0,
-    showPrice: false,
-    locationType: "custom",
-    locationDetail: listing.address,
-    note: booking.note,
-    bookingId: booking.id,
-    businessName: tenant.name,
-    replyTo: tenant.replyToEmail || tenant.ownerEmail || undefined,
-    calendarHtml,
-    manageUrl: `${appBaseUrl}/booking/manage/${confirmationToken}`,
-  });
-
-  // Zalogovat potvrzovací email do historie notifikací
-  await prisma.notificationLog.create({
-    data: {
-      bookingId: booking.id,
-      ruleId: null,
-      channel: "email",
-      label: "✅ Potvrzení rezervace",
-      status: emailRes.ok ? "sent" : "failed",
-      error: emailRes.error ?? null,
-    },
-  }).catch(() => {});
+  const calendarHtml = emailRes.calendarHtml;
 
   // Google Calendar — vytvoříme událost ve vlastníkově kalendáři (pokud je nastavený).
   let googleEventLink: string | null = null;

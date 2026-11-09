@@ -231,6 +231,14 @@ model Booking {
   // Vlastník/klient zastavil další automatické emaily (follow-upy se nepošlou)
   emailingStopped      Boolean   @default(false)
 
+  // Rezervace založená „zvenku" (integrace, např. Tabidoo přes Make).
+  // externalRef = ID aktivity ve zdrojovém systému (idempotence), source = "tabidoo".
+  // U veřejných rezervací zůstávají null.
+  externalRef     String?   @unique
+  source          String?
+  // Místo konání zadané u konkrétní rezervace (přebíjí adresu položky v e-mailech).
+  location        String?
+
   // Notifikační log (jedna rezervace má víc notifikací)
   notifications NotificationLog[]
 

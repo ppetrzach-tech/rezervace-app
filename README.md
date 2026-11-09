@@ -174,3 +174,37 @@ src/
 ## Licence
 
 Volné použití pro vaše projekty.
+
+## Integrace s Tabidoo
+
+Rezervace „zvenku" (Tabidoo → Make → tato aplikace). Rezervace založená přes integraci se chová stejně jako ta, kterou si klient udělá sám na veřejné stránce:
+- dostane stejný potvrzovací e-mail s odkazem „Přeplánovat nebo zrušit",
+- navazující e-maily/SMS chodí podle notifikačních pravidel pro daný druh (konzultace / nemovitost),
+- historie se zapisuje do NotificationLog,
+- rezervace je vidět v dashboardu.
+
+Rozdíly oproti veřejné rezervaci: **nevytváří se Google událost** (zakládá ji Make), **neposílá se e-mail vlastníkovi**, termín se nekontroluje proti slotům.
+
+**Zabezpečení:** každý požadavek musí mít hlavičku `x-integration-secret: <INTEGRATION_SECRET>`, jinak vrátí `401`. Proměnná `INTEGRATION_SECRET` (aspoň 16 znaků, náhodná) se nastavuje jen ve Vercelu, do repozitáře nepatří. Bez ní je integrace vypnutá. Volitelně `INTEGRATION_TENANT_SLUG`; když v systému je jen jeden účet, není potřeba.
+
+### `POST /api/integrations/booking`
+```json
+{
+  "externalRef": "ID aktivity v Tabidoo",
+  "kind": "consultation",              // nebo "property"
+  "listingSlug": "konzultacezach",     // volitelné; jinak první aktivní položka daného druhu
+  "startsAt": "2026-11-20T10:00:00+01:00",
+  "endsAt": "2026-11-20T10:30:00+01:00",   // volitelné; jinak startsAt + délka položky
+  "client": { "name": "Jan Novák", "email": "jan@example.cz", "phone": "+420…" },  // phone volitelný
+  "note": "…", "location": "Kancelář Přerov",   // volitelné
+  "sendConfirmation": true             // výchozí true
+}
+```
+Odpověď `200`: `{ bookingId, manageUrl, dashboardUrl, emailSent, alreadyExisted }`.
+Volání je **idempotentní podle `externalRef`**: když rezervace s tímto externalRef už existuje, nic se nezakládá ani neposílá a vrátí se existující rezervace s `alreadyExisted: true`. Termín v minulosti vrátí `400`.
+
+### `POST /api/integrations/booking/{externalRef}/move`
+Body `{ "startsAt": "…", "endsAt": "…" }`, `endsAt` je volitelné. Stejný přesun a e-mail klientovi jako přesun z dashboardu. Neexistující externalRef vrátí `404`, zrušená rezervace `409`.
+
+### `POST /api/integrations/booking/{externalRef}/cancel`
+Body `{ "reason": "…" }`, `reason` je volitelné a zapíše se do historie. Stejné zrušení a e-mail klientovi jako zrušení z dashboardu. Opakované volání vrátí `alreadyCancelled: true` a nic znovu neposílá. Neexistující externalRef vrátí `404`.

@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { deleteCalendarEvent } from "@/lib/google-calendar";
 import { canManage } from "@/lib/perms";
-import { sendBookingChangeEmailToClient } from "@/lib/booking-client-email";
+import { BOOKING_FULL_INCLUDE, cancelBooking } from "@/lib/booking-actions";
 
 const schema = z.object({ action: z.enum(["cancel", "reschedule"]).optional() });
 
@@ -30,13 +28,7 @@ export async function POST(
 
   const booking = await prisma.booking.findUnique({
     where: { id: params.id },
-    include: {
-      client: true,
-      service: true,
-      provider: true,
-      listing: true,
-      tenant: true,
-    },
+    include: BOOKING_FULL_INCLUDE,
   });
   if (!booking) {
     return NextResponse.json({ error: "Rezervace neexistuje" }, { status: 404 });
@@ -52,49 +44,8 @@ export async function POST(
     return NextResponse.json({ error: "Bez oprávnění" }, { status: 403 });
   }
 
-  // Zrušíme rezervaci, uvolníme slot (může se znovu rezervovat) a zastavíme
-  // další automatické emaily k této rezervaci.
-  await prisma.booking.update({
-    where: { id: params.id },
-    data: { status: "cancelled", eventSlotId: null, emailingStopped: true },
-  });
-
-  // Smažeme i událost v Google Calendar (pokud byla vytvořena)
-  if (booking.googleEventId && booking.tenant.googleCalendarId) {
-    const res = await deleteCalendarEvent(
-      booking.tenant.googleCalendarId,
-      booking.googleEventId,
-    );
-    if (!res.ok) {
-      console.warn("[cancel] Google Calendar delete failed:", res.error);
-    }
-  }
-
-  // E-mail klientovi (zrušení / výzva k přeplánování)
-  let clientEmailed = false;
-  try {
-    const logId = randomUUID();
-    const r = await sendBookingChangeEmailToClient(booking, action, logId);
-    clientEmailed = r.ok;
-    await prisma.notificationLog
-      .create({
-        data: {
-          id: logId,
-          bookingId: booking.id,
-          ruleId: null,
-          channel: "email",
-          label:
-            action === "reschedule"
-              ? "🔄 Přeplánování — e-mail klientovi"
-              : "❌ Zrušení — e-mail klientovi",
-          status: r.ok ? "sent" : "failed",
-          error: r.error ?? null,
-        },
-      })
-      .catch(() => {});
-  } catch (e) {
-    console.warn("[cancel] client email failed:", e);
-  }
+  // Zrušení + uvolnění slotu + stop dalších e-mailů + kalendář + e-mail klientovi
+  const { clientEmailed } = await cancelBooking({ booking, action });
 
   return NextResponse.json({ ok: true, action, clientEmailed });
 }

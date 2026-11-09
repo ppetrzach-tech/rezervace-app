@@ -96,7 +96,7 @@ export async function processNotifications(): Promise<{
       const dateFmt = czDate(booking.startsAt);
       const timeFmt = czTime(booking.startsAt);
       const businessName = booking.tenant.name;
-      const location = booking.listing?.address || booking.service.locationDetail || locationLabel(booking.service.locationType);
+      const location = booking.location || booking.listing?.address || booking.service.locationDetail || locationLabel(booking.service.locationType);
 
       const baseUrl = PUBLIC_BASE_URL;
       const confirmUrl = booking.confirmationToken
@@ -167,6 +167,7 @@ export async function processNotifications(): Promise<{
               startsAt: booking.startsAt,
               endsAt: booking.endsAt,
               location:
+                booking.location ??
                 booking.listing?.address ??
                 booking.service.locationDetail ??
                 undefined,
