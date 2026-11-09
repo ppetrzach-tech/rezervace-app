@@ -34,3 +34,36 @@ export async function resolveIntegrationTenant(tenantSlug?: string) {
 }
 
 export const INTEGRATION_SOURCE = "tabidoo";
+
+/**
+ * Načte tělo požadavku jako JSON NEBO formulář (application/x-www-form-urlencoded).
+ * Formulář je „plochý" (snadné v Make bez escapování JSONu): clientName, clientEmail,
+ * clientPhone se poskládají do `client`, prázdná pole se vynechají,
+ * sendConfirmation "false"/"0" → false.
+ */
+export async function readIntegrationBody(req: NextRequest): Promise<unknown> {
+  const ct = req.headers.get("content-type") ?? "";
+  if (ct.includes("application/x-www-form-urlencoded") || ct.includes("multipart/form-data")) {
+    const form = await req.formData();
+    const flat: Record<string, string> = {};
+    form.forEach((v, k) => {
+      if (typeof v === "string" && v.trim() !== "") flat[k] = v.trim();
+    });
+    const out: Record<string, unknown> = {};
+    const client: Record<string, string> = {};
+    for (const [k, v] of Object.entries(flat)) {
+      if (k === "clientName") client.name = v;
+      else if (k === "clientEmail") client.email = v;
+      else if (k === "clientPhone") client.phone = v;
+      else if (k === "sendConfirmation") out.sendConfirmation = !["false", "0", "ne", "no"].includes(v.toLowerCase());
+      else out[k] = v;
+    }
+    if (Object.keys(client).length) out.client = client;
+    return out;
+  }
+  try {
+    return await req.json();
+  } catch {
+    return undefined;
+  }
+}

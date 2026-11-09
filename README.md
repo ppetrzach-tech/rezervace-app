@@ -208,3 +208,7 @@ Body `{ "startsAt": "…", "endsAt": "…" }`, `endsAt` je volitelné. Stejný p
 
 ### `POST /api/integrations/booking/{externalRef}/cancel`
 Body `{ "reason": "…" }`, `reason` je volitelné a zapíše se do historie. Stejné zrušení a e-mail klientovi jako zrušení z dashboardu. Opakované volání vrátí `alreadyCancelled: true` a nic znovu neposílá. Neexistující externalRef vrátí `404`.
+
+**Formulář místo JSONu (pro Make):** všechny tři endpointy přijímají i `application/x-www-form-urlencoded` s plochými poli (`clientName`, `clientEmail`, `clientPhone` místo objektu `client`). Prázdná pole se ignorují, takže se v Make nemusí řešit escapování JSONu. Přesun na stejný termín nic nemění ani neposílá (`unchanged: true`), proto ho Make může volat při každé úpravě aktivity.
+
+**Napojení v Make:** scénáře „Tabidoo | Aktivity → Kalendář (create/edit/delete)“ mají samostatnou větev „Rezervace (Konzultace)“. Ta se spustí jen u aktivit kategorie **Konzultace** s vyplněným kontaktem (pole Subjekty a jeho e-mail `email_1`).

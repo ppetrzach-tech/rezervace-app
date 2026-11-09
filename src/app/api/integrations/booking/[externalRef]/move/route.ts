@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireIntegrationSecret } from "@/lib/integration";
+import { readIntegrationBody, requireIntegrationSecret } from "@/lib/integration";
 import {
   BOOKING_FULL_INCLUDE,
   BookingConflictError,
@@ -25,10 +25,8 @@ export async function POST(
   const denied = requireIntegrationSecret(req);
   if (denied) return denied;
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
+  const body = await readIntegrationBody(req);
+  if (body === undefined) {
     return NextResponse.json({ error: "Neplatné JSON" }, { status: 400 });
   }
   const parsed = schema.safeParse(body);
@@ -57,6 +55,18 @@ export async function POST(
   const endsAt = parsed.data.endsAt
     ? new Date(parsed.data.endsAt)
     : new Date(startsAt.getTime() + durationMs);
+  // Stejný termín → nic neměnit ani neposílat (Make volá move při každé úpravě aktivity).
+  if (
+    startsAt.getTime() === booking.startsAt.getTime() &&
+    endsAt.getTime() === booking.endsAt.getTime()
+  ) {
+    return NextResponse.json({
+      ok: true,
+      bookingId: booking.id,
+      emailSent: false,
+      unchanged: true,
+    });
+  }
   if (startsAt.getTime() < Date.now()) {
     return NextResponse.json({ error: "Termín je v minulosti" }, { status: 400 });
   }
@@ -72,7 +82,7 @@ export async function POST(
       slotId: null,
       syncCalendar: false,
     });
-    return NextResponse.json({ ok: true, bookingId: booking.id, emailSent });
+    return NextResponse.json({ ok: true, bookingId: booking.id, emailSent, unchanged: false });
   } catch (e) {
     if (e instanceof BookingConflictError) {
       return NextResponse.json({ error: e.message }, { status: 409 });

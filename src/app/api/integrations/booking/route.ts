@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { PUBLIC_BASE_URL } from "@/lib/base-url";
 import {
   INTEGRATION_SOURCE,
+  readIntegrationBody,
   requireIntegrationSecret,
   resolveIntegrationTenant,
 } from "@/lib/integration";
@@ -46,10 +47,8 @@ export async function POST(req: NextRequest) {
   const denied = requireIntegrationSecret(req);
   if (denied) return denied;
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
+  const body = await readIntegrationBody(req);
+  if (body === undefined) {
     return NextResponse.json({ error: "Neplatné JSON" }, { status: 400 });
   }
   const parsed = schema.safeParse(body);

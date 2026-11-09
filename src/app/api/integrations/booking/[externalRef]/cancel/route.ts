@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireIntegrationSecret } from "@/lib/integration";
+import { readIntegrationBody, requireIntegrationSecret } from "@/lib/integration";
 import { BOOKING_FULL_INCLUDE, cancelBooking } from "@/lib/booking-actions";
 
 const schema = z.object({ reason: z.string().max(500).optional() });
@@ -17,12 +17,8 @@ export async function POST(
   const denied = requireIntegrationSecret(req);
   if (denied) return denied;
 
-  let raw: unknown = {};
-  try {
-    raw = await req.json();
-  } catch {
-    /* prázdné tělo je v pořádku */
-  }
+  // Prázdné tělo je v pořádku.
+  const raw = (await readIntegrationBody(req)) ?? {};
   const parsed = schema.safeParse(raw ?? {});
   const reason = parsed.success ? parsed.data.reason?.trim() : undefined;
 
